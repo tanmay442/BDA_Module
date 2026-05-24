@@ -1,5 +1,6 @@
 const PDFDocument = require('pdfkit');
 const Quotation = require('./quotation.model');
+const Lead = require('../leads/lead.model');
 const AuditLog = require('../auditLogs/auditLog.model');
 const { broadcast } = require('../../services/pusher');
 
@@ -16,6 +17,9 @@ exports.list = async (req, res, next) => {
 
     if (leadId) filter.leadId = leadId;
     if (status) filter.status = status;
+    if (req.user.role === 'bda') {
+      filter.createdBy = req.user._id;
+    }
 
     const quotations = await Quotation.find(filter)
       .populate('leadId', 'companyName contactPerson')
@@ -77,6 +81,10 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Quotation not found' });
     }
 
+    if (req.user.role === 'bda' && existing.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to edit this quotation' });
+    }
+
     if (req.body.status && req.body.status !== existing.status) {
       req.body.version = (existing.version || 1) + 1;
     }
@@ -85,6 +93,16 @@ exports.update = async (req, res, next) => {
       returnDocument: 'after',
       runValidators: true,
     });
+
+    if (quotation.status === 'sent') {
+      await Lead.findByIdAndUpdate(quotation.leadId, { currentStage: 'quotation_sent' });
+      broadcast('leads', 'lead:stage_changed', { id: quotation.leadId, stage: 'quotation_sent' });
+    }
+
+    if (quotation.status === 'accepted') {
+      await Lead.findByIdAndUpdate(quotation.leadId, { currentStage: 'won' });
+      broadcast('leads', 'lead:stage_changed', { id: quotation.leadId, stage: 'won' });
+    }
 
     broadcast('quotations', 'quotation:updated', { id: quotation._id });
     res.json(quotation);
@@ -95,11 +113,17 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    const quotation = await Quotation.findByIdAndDelete(req.params.id);
+    const quotation = await Quotation.findById(req.params.id);
 
     if (!quotation) {
       return res.status(404).json({ message: 'Quotation not found' });
     }
+
+    if (req.user.role === 'bda' && quotation.createdBy.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: 'Not authorized to delete this quotation' });
+    }
+
+    await Quotation.findByIdAndDelete(req.params.id);
 
     broadcast('quotations', 'quotation:deleted', { id: quotation._id });
     res.json({ message: 'Quotation deleted' });

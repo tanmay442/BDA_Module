@@ -1,4 +1,5 @@
 const Lead = require('./lead.model');
+const Quotation = require('../quotations/quotation.model');
 const AuditLog = require('../auditLogs/auditLog.model');
 const Client = require('../clients/client.model');
 const { broadcast } = require('../../services/pusher');
@@ -151,6 +152,13 @@ exports.stageTransition = async (req, res, next) => {
       oldValue: { currentStage: oldStage },
       newValue: { currentStage: stage },
     });
+
+    if (stage === 'quotation_sent' && oldStage !== 'quotation_sent') {
+      await Quotation.updateMany(
+        { leadId: lead._id, status: 'draft' },
+        { status: 'sent', $inc: { version: 1 } }
+      );
+    }
 
     if (stage === 'won' && oldStage !== 'won') {
       await Client.findOneAndUpdate(

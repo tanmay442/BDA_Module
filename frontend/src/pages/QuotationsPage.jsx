@@ -1,6 +1,7 @@
 import { useState } from 'react'
-import { useQuotations, useDeleteQuotation, downloadQuotationPdf } from '../hooks/useQuotations'
+import { useQuotations, useUpdateQuotation, useDeleteQuotation, downloadQuotationPdf } from '../hooks/useQuotations'
 import CreateQuotationModal from '../components/CreateQuotationModal'
+import EditQuotationModal from '../components/EditQuotationModal'
 
 const statusColors = {
   draft: 'bg-gray-100 text-gray-600',
@@ -10,11 +11,19 @@ const statusColors = {
   rejected: 'bg-red-100 text-red-700',
 }
 
+const statusOptions = ['draft', 'sent', 'revised', 'accepted', 'rejected']
+
 export default function QuotationsPage() {
   const [showCreate, setShowCreate] = useState(false)
+  const [editingQuote, setEditingQuote] = useState(null)
   const [filter, setFilter] = useState({ status: '' })
   const { data: quotations, isLoading } = useQuotations(filter)
+  const updateQuote = useUpdateQuotation()
   const deleteQuote = useDeleteQuotation()
+
+  const handleStatusChange = (q, newStatus) => {
+    updateQuote.mutate({ id: q._id, data: { status: newStatus } })
+  }
 
   return (
     <div>
@@ -35,11 +44,9 @@ export default function QuotationsPage() {
           onChange={(e) => setFilter({ status: e.target.value })}
         >
           <option value="">All Status</option>
-          <option value="draft">Draft</option>
-          <option value="sent">Sent</option>
-          <option value="revised">Revised</option>
-          <option value="accepted">Accepted</option>
-          <option value="rejected">Rejected</option>
+          {statusOptions.map((s) => (
+            <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+          ))}
         </select>
       </div>
 
@@ -50,37 +57,57 @@ export default function QuotationsPage() {
       ) : (
         <div className="space-y-2">
           {quotations?.map((q) => (
-            <div key={q._id} className="flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4">
-              <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-medium text-gray-800">{q.quotationNumber}</h4>
-                <p className="text-xs text-gray-500">
-                  {q.leadId?.companyName || 'No lead'} &middot; ${q.grandTotal.toLocaleString()}
-                </p>
-                {q.items && (
-                  <p className="text-xs text-gray-400">{q.items.length} item(s) &middot; v{q.version}</p>
-                )}
+            <div key={q._id} className="rounded-lg border border-gray-200 bg-white">
+              <div className="flex items-center gap-4 p-4">
+                <button
+                  onClick={() => setEditingQuote(q)}
+                  className="flex-1 min-w-0 text-left"
+                >
+                  <h4 className="text-sm font-medium text-gray-800">{q.quotationNumber}</h4>
+                  <p className="text-xs text-gray-500">
+                    {q.leadId?.companyName || 'No lead'} &middot; ${q.grandTotal.toLocaleString()}
+                  </p>
+                  {q.items && (
+                    <p className="text-xs text-gray-400">{q.items.length} item(s) &middot; v{q.version} &middot; {q.createdBy?.name}</p>
+                  )}
+                </button>
+
+                <select
+                  className={`rounded-full px-2 py-0.5 text-xs font-medium border-0 ${statusColors[q.status] || 'bg-gray-100'}`}
+                  value={q.status}
+                  onChange={(e) => handleStatusChange(q, e.target.value)}
+                >
+                  {statusOptions.map((s) => (
+                    <option key={s} value={s}>{s.charAt(0).toUpperCase() + s.slice(1)}</option>
+                  ))}
+                </select>
+
+                <button
+                  onClick={() => downloadQuotationPdf(q._id, `${q.quotationNumber}.pdf`)}
+                  className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
+                >
+                  PDF
+                </button>
+                <button
+                  onClick={() => {
+                    if (window.confirm('Delete this quotation?')) deleteQuote.mutate(q._id)
+                  }}
+                  className="text-sm text-red-400 hover:text-red-600"
+                >
+                  Delete
+                </button>
               </div>
-              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[q.status] || 'bg-gray-100'}`}>
-                {q.status}
-              </span>
-              <button
-                onClick={() => downloadQuotationPdf(q._id, `${q.quotationNumber}.pdf`)}
-                className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
-              >
-                PDF
-              </button>
-              <button
-                onClick={() => deleteQuote.mutate(q._id)}
-                className="text-sm text-red-400 hover:text-red-600"
-              >
-                Delete
-              </button>
             </div>
           ))}
         </div>
       )}
 
       <CreateQuotationModal open={showCreate} onClose={() => setShowCreate(false)} />
+      <EditQuotationModal
+        open={!!editingQuote}
+        onClose={() => setEditingQuote(null)}
+        quotation={editingQuote}
+      />
     </div>
   )
 }
