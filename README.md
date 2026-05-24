@@ -1,5 +1,7 @@
 # Manufacturing SalesOps Platform
 
+Imp note --> Log in as a manger to be able to see all the features and with dummy data,to test a employee choose bda it would have no dummy data create some and see back the manager profile and watch the updated changes
+
 Single-tenant Manufacturing Sales Operations platform for managing leads, quotations, tasks, and team performance with role-based dashboards and real-time updates.
 
 ---
