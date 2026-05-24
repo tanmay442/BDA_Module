@@ -42,7 +42,7 @@ describe('User Routes', () => {
       expect(res.body.length).toBeGreaterThanOrEqual(2);
     });
 
-    it('should forbid BDA from listing users', async () => {
+    it('should allow BDA to list users (filtered)', async () => {
       const bda = await User.create({
         clerkId: 'clerk_bda_user',
         name: 'BDA User',
@@ -53,7 +53,9 @@ describe('User Routes', () => {
 
       const res = await request(app).get('/api/users');
 
-      expect(res.status).toBe(403);
+      expect(res.status).toBe(200);
+      expect(res.body.length).toBe(1);
+      expect(res.body[0].name).toBe('BDA User');
     });
   });
 

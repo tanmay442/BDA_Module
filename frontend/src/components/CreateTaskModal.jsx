@@ -1,23 +1,34 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreateTask } from '../hooks/useTasks'
+import { useUsers } from '../hooks/useUsers'
 
-export default function CreateTaskModal({ open, onClose }) {
+export default function CreateTaskModal({ open, onClose, leadId }) {
+  const { data: users } = useUsers()
   const [form, setForm] = useState({
     title: '',
     description: '',
     priority: 'medium',
     dueDate: '',
+    assignedTo: '',
   })
   const createTask = useCreateTask()
+
+  useEffect(() => {
+    if (open && leadId) {
+      setForm((prev) => ({ ...prev, leadId }))
+    }
+  }, [open, leadId])
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
       await createTask.mutateAsync({
         ...form,
+        leadId: leadId || form.leadId || undefined,
+        assignedTo: form.assignedTo || undefined,
         dueDate: form.dueDate ? new Date(form.dueDate) : undefined,
       })
-      setForm({ title: '', description: '', priority: 'medium', dueDate: '' })
+      setForm({ title: '', description: '', priority: 'medium', dueDate: '', assignedTo: '' })
       onClose()
     } catch {
     }
@@ -52,6 +63,16 @@ export default function CreateTaskModal({ open, onClose }) {
             <option value="low">Low</option>
             <option value="medium">Medium</option>
             <option value="high">High</option>
+          </select>
+          <select
+            className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+            value={form.assignedTo}
+            onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
+          >
+            <option value="">Assign to...</option>
+            {users?.map((u) => (
+              <option key={u._id} value={u._id}>{u.name} ({u.role})</option>
+            ))}
           </select>
           <input
             type="date"

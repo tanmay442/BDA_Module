@@ -1,8 +1,10 @@
 import { useState } from 'react'
 import { useLead, useUpdateLead, useStageTransition } from '../hooks/useLeads'
 import { useActivities, useCreateActivity } from '../hooks/useActivities'
-import { useTasks } from '../hooks/useTasks'
+import { useTasks, useCreateTask } from '../hooks/useTasks'
 import { useQuotations, downloadQuotationPdf } from '../hooks/useQuotations'
+import CreateQuotationModal from './CreateQuotationModal'
+import CreateTaskModal from './CreateTaskModal'
 
 const stages = [
   'new',
@@ -38,6 +40,8 @@ export default function LeadDetailPanel({ leadId, onClose }) {
 
   const [newActivity, setNewActivity] = useState({ type: 'note', message: '' })
   const [tab, setTab] = useState('activity')
+  const [showQuoteModal, setShowQuoteModal] = useState(false)
+  const [showTaskModal, setShowTaskModal] = useState(false)
 
   if (isLoading || !lead) {
     return (
@@ -160,12 +164,28 @@ export default function LeadDetailPanel({ leadId, onClose }) {
                 <p className="text-gray-700 bg-gray-50 rounded-lg p-3">{lead.notes}</p>
               </div>
             )}
-            <button
-              onClick={() => { setForm({}); setEditing(true) }}
-              className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-            >
-              Edit Details
-            </button>
+            <div className="flex gap-2 mt-3">
+              <button
+                onClick={() => { setForm({}); setEditing(true) }}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                Edit Details
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={() => setShowQuoteModal(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + Quotation
+              </button>
+              <span className="text-gray-300">|</span>
+              <button
+                onClick={() => setShowTaskModal(true)}
+                className="text-sm text-blue-600 hover:text-blue-700 font-medium"
+              >
+                + Task
+              </button>
+            </div>
           </div>
         )}
 
@@ -282,6 +302,8 @@ export default function LeadDetailPanel({ leadId, onClose }) {
           )}
         </div>
       </div>
+      <CreateQuotationModal open={showQuoteModal} onClose={() => setShowQuoteModal(false)} leadId={lead?._id} />
+      <CreateTaskModal open={showTaskModal} onClose={() => setShowTaskModal(false)} leadId={lead?._id} />
     </div>
   )
 }

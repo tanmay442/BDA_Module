@@ -11,7 +11,7 @@ export default function OnboardingPage() {
   const [form, setForm] = useState({
     name: user?.fullName || user?.emailAddresses?.[0]?.emailAddress || '',
     role: '',
-    company: '',
+    company: 'ACME Manufacturing',
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
@@ -71,13 +71,11 @@ export default function OnboardingPage() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Company</label>
             <input
-              required
-              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+              readOnly
+              className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-600"
               value={form.company}
-              onChange={(e) => setForm({ ...form, company: e.target.value })}
-              placeholder="e.g. ACME Manufacturing"
             />
           </div>
 

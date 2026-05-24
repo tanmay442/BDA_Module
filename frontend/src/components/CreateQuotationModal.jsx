@@ -1,13 +1,24 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCreateQuotation } from '../hooks/useQuotations'
+import { useLeads } from '../hooks/useLeads'
 
-export default function CreateQuotationModal({ open, onClose }) {
+export default function CreateQuotationModal({ open, onClose, leadId: preselectedLeadId }) {
+  const { data: leads } = useLeads()
   const [form, setForm] = useState({
-    leadId: '',
+    leadId: preselectedLeadId || '',
     items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }],
     tax: 0,
   })
   const createQuote = useCreateQuotation()
+
+  useEffect(() => {
+    if (open) {
+      setForm((prev) => ({
+        ...prev,
+        leadId: preselectedLeadId || prev.leadId,
+      }))
+    }
+  }, [open, preselectedLeadId])
 
   const updateItem = (i, field, value) => {
     const items = [...form.items]
@@ -53,12 +64,16 @@ export default function CreateQuotationModal({ open, onClose }) {
       <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold text-gray-800">New Quotation</h3>
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-          <input
-            placeholder="Lead ID (optional)"
+          <select
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
             value={form.leadId}
             onChange={(e) => setForm({ ...form, leadId: e.target.value })}
-          />
+          >
+            <option value="">Select a lead...</option>
+            {leads?.map((l) => (
+              <option key={l._id} value={l._id}>{l.companyName} — {l.contactPerson}</option>
+            ))}
+          </select>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">

@@ -2,7 +2,16 @@ const User = require('./user.model');
 
 exports.list = async (req, res, next) => {
   try {
-    const users = await User.find().select('-__v').sort('name');
+    let filter = {};
+    if (req.user.role === 'bda') {
+      filter = {
+        $or: [
+          { _id: req.user._id },
+          { role: { $in: ['manager', 'admin'] } },
+        ],
+      };
+    }
+    const users = await User.find(filter).select('-__v').sort('name');
     res.json(users);
   } catch (error) {
     next(error);
