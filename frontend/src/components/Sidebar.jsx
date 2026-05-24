@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useCurrentUser } from '../hooks/useUsers'
 
 const links = [
   { to: '/', label: 'Dashboard', icon: '📊' },
@@ -9,10 +10,12 @@ const links = [
 ]
 
 export default function Sidebar({ open, onClose }) {
+  const { data: currentUser } = useCurrentUser()
+
   return (
     <>
       <aside className="hidden w-64 flex-col border-r border-gray-200 bg-white lg:flex">
-        <SidebarContent />
+        <SidebarContent company={currentUser?.company} />
       </aside>
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
@@ -21,7 +24,7 @@ export default function Sidebar({ open, onClose }) {
             <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
               <div className="flex items-center gap-2">
                 <span className="text-xl">🏭</span>
-                <span className="font-bold text-gray-800">SalesOps</span>
+                <span className="font-bold text-gray-800">{currentUser?.company || 'SalesOps'}</span>
               </div>
               <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl leading-none">&times;</button>
             </div>
@@ -33,7 +36,7 @@ export default function Sidebar({ open, onClose }) {
   )
 }
 
-function SidebarContent({ onClick }) {
+function SidebarContent({ onClick, company }) {
   return (
     <nav className="flex-1 space-y-1 p-4">
       {links.map((link) => (

@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { UserButton } from '@clerk/clerk-react'
 import { useReminders } from '../hooks/useReminders'
+import { useCurrentUser } from '../hooks/useUsers'
 
 export default function TopBar({ onMenuClick }) {
   const { data: reminders } = useReminders()
+  const { data: currentUser } = useCurrentUser()
   const [showReminders, setShowReminders] = useState(false)
 
   const dueCount = (reminders?.dueToday?.length || 0) + (reminders?.overdue?.length || 0)
@@ -14,7 +16,10 @@ export default function TopBar({ onMenuClick }) {
         <button onClick={onMenuClick} className="text-xl text-gray-600 hover:text-gray-900 lg:hidden">
           &#9776;
         </button>
-        <h1 className="text-lg font-semibold text-gray-800">Manufacturing SalesOps</h1>
+        <div>
+          <h1 className="text-lg font-semibold text-gray-800">{currentUser?.company || 'SalesOps'}</h1>
+          <p className="text-xs text-gray-500 capitalize">{currentUser?.name} &middot; {currentUser?.role}</p>
+        </div>
       </div>
       <div className="flex items-center gap-4">
         <div className="relative">

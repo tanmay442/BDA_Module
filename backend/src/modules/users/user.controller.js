@@ -33,6 +33,26 @@ exports.me = async (req, res, next) => {
   }
 };
 
+exports.onboard = async (req, res, next) => {
+  try {
+    const { name, role, company } = req.body;
+    if (!role || !company) {
+      return res.status(400).json({ message: 'Role and company are required' });
+    }
+    const updates = {};
+    if (name) updates.name = name;
+    if (role) updates.role = role;
+    if (company) updates.company = company;
+    const user = await User.findByIdAndUpdate(req.user._id, updates, {
+      returnDocument: 'after',
+      runValidators: true,
+    });
+    res.json(user);
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.updateRole = async (req, res, next) => {
   try {
     const { role } = req.body;

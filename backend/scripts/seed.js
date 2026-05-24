@@ -27,10 +27,10 @@ async function seed() {
 
   // Create users
   const [admin, manager, bda1, bda2] = await User.create([
-    { clerkId: 'seed_admin', name: 'Alex Admin', email: 'admin@example.com', role: 'admin', department: 'Management' },
-    { clerkId: 'seed_manager', name: 'Mia Manager', email: 'manager@example.com', role: 'manager', department: 'Sales' },
-    { clerkId: 'seed_bda1', name: 'Bob BDA', email: 'bob@example.com', role: 'bda', department: 'Sales' },
-    { clerkId: 'seed_bda2', name: 'Sarah BDA', email: 'sarah@example.com', role: 'bda', department: 'Sales' },
+    { clerkId: 'seed_admin', name: 'Alex Admin', email: 'admin@example.com', role: 'admin', department: 'Management', company: 'ACME Manufacturing' },
+    { clerkId: 'seed_manager', name: 'Mia Manager', email: 'manager@example.com', role: 'manager', department: 'Sales', company: 'ACME Manufacturing' },
+    { clerkId: 'seed_bda1', name: 'Bob BDA', email: 'bob@example.com', role: 'bda', department: 'Sales', company: 'ACME Manufacturing' },
+    { clerkId: 'seed_bda2', name: 'Sarah BDA', email: 'sarah@example.com', role: 'bda', department: 'Sales', company: 'ACME Manufacturing' },
   ]);
   console.log('Created 4 users');
 

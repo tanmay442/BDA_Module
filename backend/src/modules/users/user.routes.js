@@ -7,6 +7,7 @@ const router = Router();
 router.use(authenticate);
 
 router.get('/me', ctrl.me);
+router.patch('/me/onboard', ctrl.onboard);
 router.get('/', authorize('admin', 'manager'), ctrl.list);
 router.get('/:id', authorize('admin', 'manager'), ctrl.getById);
 router.patch('/:id/role', authorize('admin'), ctrl.updateRole);

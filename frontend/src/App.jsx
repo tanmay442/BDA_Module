@@ -5,8 +5,10 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setTokenProvider } from './services/api'
 import usePusher from './hooks/usePusher'
 import AppLayout from './components/AppLayout'
+import { useCurrentUser } from './hooks/useUsers'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
+import OnboardingPage from './pages/OnboardingPage'
 import Dashboard from './pages/Dashboard'
 import LeadsPage from './pages/LeadsPage'
 import TasksPage from './pages/TasksPage'
@@ -27,13 +29,25 @@ function ProtectedRoute() {
   return (
     <>
       <SignedIn>
-        <AppLayout />
+        <OnboardingGate />
       </SignedIn>
       <SignedOut>
         <RedirectToSignIn />
       </SignedOut>
     </>
   )
+}
+
+function OnboardingGate() {
+  const { data: currentUser, isLoading } = useCurrentUser()
+
+  if (isLoading) return null
+
+  if (currentUser && (!currentUser.company || !currentUser.role)) {
+    return <OnboardingPage />
+  }
+
+  return <AppLayout />
 }
 
 export default function App() {
