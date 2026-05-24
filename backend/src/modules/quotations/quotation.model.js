@@ -41,6 +41,10 @@ const quotationSchema = new mongoose.Schema(
     items: {
       type: [quotationItemSchema],
       required: true,
+      validate: {
+        validator: (v) => v.length > 0,
+        message: 'Quotation must have at least one item',
+      },
     },
     subtotal: {
       type: Number,
@@ -76,6 +80,5 @@ const quotationSchema = new mongoose.Schema(
 );
 
 quotationSchema.index({ leadId: 1 });
-quotationSchema.index({ quotationNumber: 1 });
 
 module.exports = mongoose.model('Quotation', quotationSchema);

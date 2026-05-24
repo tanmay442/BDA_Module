@@ -15,6 +15,13 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.use('/api/leads', require('./modules/leads/lead.routes'));
+app.use('/api/tasks', require('./modules/tasks/task.routes'));
+app.use('/api/quotations', require('./modules/quotations/quotation.routes'));
+app.use('/api/activities', require('./modules/activities/activity.routes'));
+app.use('/api/clients', require('./modules/clients/client.routes'));
+app.use('/api/users', require('./modules/users/user.routes'));
+
 app.use(errorHandler);
 
 if (process.env.NODE_ENV !== 'test') {
