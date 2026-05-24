@@ -6,6 +6,7 @@ import { setTokenProvider } from './services/api'
 import usePusher from './hooks/usePusher'
 import AppLayout from './components/AppLayout'
 import { useCurrentUser } from './hooks/useUsers'
+import Grainient from './components/Grainient'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
 import OnboardingPage from './pages/OnboardingPage'
@@ -50,25 +51,47 @@ function OnboardingGate() {
   return <AppLayout />
 }
 
+function AppContent() {
+  return (
+    <div className="relative min-h-screen">
+      <div className="fixed inset-0 -z-10">
+        <Grainient
+          color1="#FF9FFC"
+          color2="#5227FF"
+          color3="#B497CF"
+          timeSpeed={0.15}
+          warpStrength={0.6}
+          warpFrequency={4.0}
+          grainAmount={0.05}
+          contrast={1.2}
+          saturation={0.9}
+          zoom={0.95}
+        />
+      </div>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/sign-in" element={<SignInPage />} />
+          <Route path="/sign-up" element={<SignUpPage />} />
+          <Route element={<ProtectedRoute />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/leads" element={<LeadsPage />} />
+            <Route path="/tasks" element={<TasksPage />} />
+            <Route path="/quotations" element={<QuotationsPage />} />
+            <Route path="/users" element={<UsersPage />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </div>
+  )
+}
+
 export default function App() {
   return (
     <ClerkProvider publishableKey={clerkPubKey}>
       <QueryClientProvider client={queryClient}>
         <ClerkTokenProvider>
-        <BrowserRouter>
-          <Routes>
-            <Route path="/sign-in" element={<SignInPage />} />
-            <Route path="/sign-up" element={<SignUpPage />} />
-            <Route element={<ProtectedRoute />}>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/leads" element={<LeadsPage />} />
-              <Route path="/tasks" element={<TasksPage />} />
-              <Route path="/quotations" element={<QuotationsPage />} />
-              <Route path="/users" element={<UsersPage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </BrowserRouter>
+          <AppContent />
         </ClerkTokenProvider>
       </QueryClientProvider>
     </ClerkProvider>
