@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "experimentalServices": {
+    "web": {
+      "entrypoint": "frontend",
+      "routePrefix": "/",
+      "framework": "vite"
+    },
+    "api": {
+      "entrypoint": "backend/src/app.js",
+      "routePrefix": "/api"
+    }
+  }
+}
