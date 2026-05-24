@@ -12,10 +12,12 @@ const authenticate = async (req, res, next) => {
     let user = await User.findOne({ clerkId: auth.userId });
 
     if (!user) {
+      const email = auth.sessionClaims?.email || auth.sessionClaims?.email_address || auth.emailAddress || `${auth.userId}@clerk.local`;
+      const name = auth.sessionClaims?.name || auth.sessionClaims?.full_name || auth.fullName || email;
       user = await User.create({
         clerkId: auth.userId,
-        email: auth.emailAddress || '',
-        name: auth.fullName || auth.emailAddress || 'Unknown',
+        email,
+        name,
         role: 'bda',
       });
     }

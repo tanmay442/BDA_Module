@@ -25,7 +25,7 @@ function groupByStage(leads) {
   return groups
 }
 
-export default function KanbanBoard() {
+export default function KanbanBoard({ onLeadClick }) {
   const { data: leads, isLoading, error } = useLeads()
   const stageTransition = useStageTransition()
 
@@ -62,7 +62,7 @@ export default function KanbanBoard() {
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {stages.map((stage) => (
-          <KanbanColumn key={stage} stage={stage} leads={grouped[stage] || []} />
+          <KanbanColumn key={stage} stage={stage} leads={grouped[stage] || []} onLeadClick={onLeadClick} />
         ))}
       </div>
     </DragDropContext>

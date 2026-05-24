@@ -10,7 +10,7 @@ const stageColors = {
   lost: 'bg-red-50 border-red-300',
 }
 
-export default function LeadCard({ lead, index }) {
+export default function LeadCard({ lead, index, onClick }) {
   return (
     <Draggable draggableId={lead._id} index={index}>
       {(provided, snapshot) => (
@@ -18,8 +18,9 @@ export default function LeadCard({ lead, index }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`rounded-lg border-2 p-3 shadow-sm transition-shadow ${
-            snapshot.isDragging ? 'shadow-lg ring-2 ring-blue-400' : ''
+          onClick={onClick}
+          className={`cursor-pointer rounded-lg border-2 p-3 shadow-sm transition-shadow ${
+            snapshot.isDragging ? 'shadow-lg ring-2 ring-blue-400' : 'hover:shadow-md'
           } ${stageColors[lead.currentStage] || 'bg-white border-gray-200'}`}
         >
           <h4 className="font-semibold text-gray-800">{lead.companyName}</h4>

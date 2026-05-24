@@ -52,6 +52,7 @@ exports.create = async (req, res, next) => {
     const lead = await Lead.create({
       ...req.body,
       createdBy: req.user._id,
+      assignedTo: req.body.assignedTo || req.user._id,
     });
 
     await AuditLog.create({

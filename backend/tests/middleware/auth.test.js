@@ -51,8 +51,7 @@ describe('authenticate middleware', () => {
   it('should create user if not exists', async () => {
     getAuth.mockReturnValue({
       userId: 'clerk_new_user',
-      emailAddress: 'new@example.com',
-      fullName: 'New User',
+      sessionClaims: { email: 'new@example.com', name: 'New User' },
     });
 
     await authenticate(req, res, next);
@@ -76,7 +75,7 @@ describe('authenticate middleware', () => {
 
     getAuth.mockReturnValue({
       userId: 'clerk_existing',
-      emailAddress: 'existing@example.com',
+      sessionClaims: { email: 'existing@example.com' },
     });
 
     await authenticate(req, res, next);

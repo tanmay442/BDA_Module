@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import KanbanBoard from '../components/KanbanBoard'
+import LeadDetailPanel from '../components/LeadDetailPanel'
 import CreateLeadModal from '../components/CreateLeadModal'
 
 export default function LeadsPage() {
   const [showCreate, setShowCreate] = useState(false)
+  const [selectedLeadId, setSelectedLeadId] = useState(null)
 
   return (
     <div>
@@ -16,7 +18,13 @@ export default function LeadsPage() {
           + New Lead
         </button>
       </div>
-      <KanbanBoard />
+      <KanbanBoard onLeadClick={setSelectedLeadId} />
+      {selectedLeadId && (
+        <>
+          <div className="fixed inset-0 z-30 bg-black/20" onClick={() => setSelectedLeadId(null)} />
+          <LeadDetailPanel leadId={selectedLeadId} onClose={() => setSelectedLeadId(null)} />
+        </>
+      )}
       <CreateLeadModal open={showCreate} onClose={() => setShowCreate(false)} />
     </div>
   )

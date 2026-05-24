@@ -21,7 +21,7 @@ const stageColors = {
   lost: 'border-t-red-400',
 }
 
-export default function KanbanColumn({ stage, leads }) {
+export default function KanbanColumn({ stage, leads, onLeadClick }) {
   return (
     <div
       className={`flex w-64 shrink-0 flex-col rounded-lg border border-gray-200 bg-gray-50 border-t-4 ${stageColors[stage]}`}
@@ -44,7 +44,7 @@ export default function KanbanColumn({ stage, leads }) {
             }`}
           >
             {leads.map((lead, i) => (
-              <LeadCard key={lead._id} lead={lead} index={i} />
+              <LeadCard key={lead._id} lead={lead} index={i} onClick={() => onLeadClick?.(lead._id)} />
             ))}
             {provided.placeholder}
           </div>
