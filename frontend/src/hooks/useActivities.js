@@ -17,3 +17,19 @@ export function useCreateActivity() {
     onSuccess: (data) => qc.invalidateQueries({ queryKey: ['activities', data.leadId] }),
   })
 }
+
+export function useUpdateActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, data }) => api.patch(`/activities/${id}`, data).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['activities'] }),
+  })
+}
+
+export function useDeleteActivity() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id) => api.delete(`/activities/${id}`).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['activities'] }),
+  })
+}

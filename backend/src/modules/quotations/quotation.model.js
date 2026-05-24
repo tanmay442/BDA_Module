@@ -22,6 +22,14 @@ const quotationItemSchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    moq: {
+      type: Number,
+      min: 1,
+    },
+    deliveryEstimate: {
+      type: String,
+      trim: true,
+    },
   },
   { _id: false }
 );

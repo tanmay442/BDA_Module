@@ -12,5 +12,6 @@ router.post('/', ctrl.create);
 router.patch('/:id', ctrl.update);
 router.delete('/:id', authorize('admin', 'manager'), ctrl.remove);
 router.patch('/:id/stage', ctrl.stageTransition);
+router.patch('/:id/assign', ctrl.assign);
 
 module.exports = router;

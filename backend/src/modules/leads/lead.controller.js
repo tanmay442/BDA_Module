@@ -1,5 +1,6 @@
 const Lead = require('./lead.model');
 const AuditLog = require('../auditLogs/auditLog.model');
+const Client = require('../clients/client.model');
 const { broadcast } = require('../../services/pusher');
 
 exports.list = async (req, res, next) => {
@@ -104,6 +105,26 @@ exports.remove = async (req, res, next) => {
   }
 };
 
+exports.assign = async (req, res, next) => {
+  try {
+    const { assignedTo } = req.body;
+    if (!assignedTo) return res.status(400).json({ message: 'assignedTo is required' });
+
+    const lead = await Lead.findByIdAndUpdate(
+      req.params.id,
+      { assignedTo },
+      { returnDocument: 'after', runValidators: true }
+    ).populate('assignedTo', 'name email');
+
+    if (!lead) return res.status(404).json({ message: 'Lead not found' });
+
+    broadcast('leads', 'lead:updated', { id: lead._id });
+    res.json(lead);
+  } catch (error) {
+    next(error);
+  }
+};
+
 exports.stageTransition = async (req, res, next) => {
   try {
     const { stage } = req.body;
@@ -130,6 +151,21 @@ exports.stageTransition = async (req, res, next) => {
       oldValue: { currentStage: oldStage },
       newValue: { currentStage: stage },
     });
+
+    if (stage === 'won' && oldStage !== 'won') {
+      await Client.findOneAndUpdate(
+        { leadId: lead._id },
+        {
+          leadId: lead._id,
+          companyName: lead.companyName,
+          contactPerson: lead.contactPerson,
+          email: lead.email,
+          phone: lead.phone,
+          accountManager: lead.assignedTo,
+        },
+        { upsert: true }
+      );
+    }
 
     broadcast('leads', 'lead:stage_changed', { id: lead._id, stage, oldStage });
     res.json(lead);

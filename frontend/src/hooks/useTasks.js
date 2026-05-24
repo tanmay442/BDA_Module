@@ -5,6 +5,7 @@ export function useTasks(filters = {}) {
   const params = {}
   if (filters.status) params.status = filters.status
   if (filters.priority) params.priority = filters.priority
+  if (filters.leadId) params.leadId = filters.leadId
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: () => api.get('/tasks', { params }).then((r) => r.data),

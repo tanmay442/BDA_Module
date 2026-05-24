@@ -6,6 +6,8 @@ import CreateLeadModal from '../components/CreateLeadModal'
 export default function LeadsPage() {
   const [showCreate, setShowCreate] = useState(false)
   const [selectedLeadId, setSelectedLeadId] = useState(null)
+  const [search, setSearch] = useState('')
+  const [stageFilter, setStageFilter] = useState('')
 
   return (
     <div>
@@ -18,7 +20,29 @@ export default function LeadsPage() {
           + New Lead
         </button>
       </div>
-      <KanbanBoard onLeadClick={setSelectedLeadId} />
+      <div className="mb-4 flex gap-2">
+        <input
+          placeholder="Search leads..."
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm flex-1 max-w-xs"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <select
+          className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          value={stageFilter}
+          onChange={(e) => setStageFilter(e.target.value)}
+        >
+          <option value="">All Stages</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="requirement_gathered">Req. Gathered</option>
+          <option value="quotation_sent">Quote Sent</option>
+          <option value="negotiation">Negotiation</option>
+          <option value="won">Won</option>
+          <option value="lost">Lost</option>
+        </select>
+      </div>
+      <KanbanBoard onLeadClick={setSelectedLeadId} search={search} stageFilter={stageFilter} />
       {selectedLeadId && (
         <>
           <div className="fixed inset-0 z-30 bg-black/20" onClick={() => setSelectedLeadId(null)} />

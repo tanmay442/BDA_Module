@@ -4,7 +4,7 @@ import { useCreateQuotation } from '../hooks/useQuotations'
 export default function CreateQuotationModal({ open, onClose }) {
   const [form, setForm] = useState({
     leadId: '',
-    items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0 }],
+    items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }],
     tax: 0,
   })
   const createQuote = useCreateQuotation()
@@ -19,7 +19,7 @@ export default function CreateQuotationModal({ open, onClose }) {
   }
 
   const addItem = () => {
-    setForm({ ...form, items: [...form.items, { productName: '', quantity: 1, unitPrice: 0, totalPrice: 0 }] })
+    setForm({ ...form, items: [...form.items, { productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }] })
   }
 
   const removeItem = (i) => {
@@ -40,7 +40,7 @@ export default function CreateQuotationModal({ open, onClose }) {
         tax: Number(form.tax) || 0,
         grandTotal,
       })
-      setForm({ leadId: '', items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0 }], tax: 0 })
+      setForm({ leadId: '', items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }], tax: 0 })
       onClose()
     } catch {
     }
@@ -92,6 +92,20 @@ export default function CreateQuotationModal({ open, onClose }) {
                 <span className="py-2 text-sm text-gray-600 w-20 text-right">
                   ${item.totalPrice.toFixed(2)}
                 </span>
+                <input
+                  type="number"
+                  min="1"
+                  placeholder="MOQ"
+                  className="w-16 rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                  value={item.moq}
+                  onChange={(e) => updateItem(i, 'moq', Number(e.target.value))}
+                />
+                <input
+                  placeholder="Delivery"
+                  className="w-20 rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                  value={item.deliveryEstimate}
+                  onChange={(e) => updateItem(i, 'deliveryEstimate', e.target.value)}
+                />
                 {form.items.length > 1 && (
                   <button type="button" onClick={() => removeItem(i)} className="py-2 text-red-400 hover:text-red-600">&times;</button>
                 )}

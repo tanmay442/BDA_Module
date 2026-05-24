@@ -25,8 +25,8 @@ function groupByStage(leads) {
   return groups
 }
 
-export default function KanbanBoard({ onLeadClick }) {
-  const { data: leads, isLoading, error } = useLeads()
+export default function KanbanBoard({ onLeadClick, search, stageFilter }) {
+  const { data: leads, isLoading, error } = useLeads({ search, stage: stageFilter })
   const stageTransition = useStageTransition()
 
   const handleDragEnd = (result) => {

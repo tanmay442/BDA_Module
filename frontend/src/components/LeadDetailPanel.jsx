@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useLead, useUpdateLead, useStageTransition } from '../hooks/useLeads'
 import { useActivities, useCreateActivity } from '../hooks/useActivities'
+import { useTasks } from '../hooks/useTasks'
+import { useQuotations, downloadQuotationPdf } from '../hooks/useQuotations'
 
 const stages = [
   'new',
@@ -25,6 +27,8 @@ const stageLabels = {
 export default function LeadDetailPanel({ leadId, onClose }) {
   const { data: lead, isLoading } = useLead(leadId)
   const { data: activities } = useActivities(leadId)
+  const { data: quotations } = useQuotations({ leadId })
+  const { data: tasks } = useTasks({ leadId })
   const updateLead = useUpdateLead()
   const stageTransition = useStageTransition()
   const createActivity = useCreateActivity()
@@ -33,6 +37,7 @@ export default function LeadDetailPanel({ leadId, onClose }) {
   const [form, setForm] = useState({})
 
   const [newActivity, setNewActivity] = useState({ type: 'note', message: '' })
+  const [tab, setTab] = useState('activity')
 
   if (isLoading || !lead) {
     return (
@@ -165,50 +170,116 @@ export default function LeadDetailPanel({ leadId, onClose }) {
         )}
 
         <div>
-          <h4 className="font-semibold text-gray-700 mb-3">Activity Log</h4>
-          <form onSubmit={handleAddActivity} className="mb-3 flex gap-2">
-            <select
-              value={newActivity.type}
-              onChange={(e) => setNewActivity({ ...newActivity, type: e.target.value })}
-              className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
-            >
-              <option value="note">Note</option>
-              <option value="call">Call</option>
-              <option value="meeting">Meeting</option>
-              <option value="follow_up">Follow Up</option>
-            </select>
-            <input
-              required
-              placeholder="Add a note..."
-              className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
-              value={newActivity.message}
-              onChange={(e) => setNewActivity({ ...newActivity, message: e.target.value })}
-            />
-            <button
-              type="submit"
-              disabled={createActivity.isPending}
-              className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
-            >
-              Add
-            </button>
-          </form>
-          <div className="space-y-2 max-h-60 overflow-y-auto">
-            {activities?.length === 0 && (
-              <p className="text-xs text-gray-400">No activity yet.</p>
-            )}
-            {activities?.map((act) => (
-              <div key={act._id} className="rounded-lg bg-gray-50 p-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-medium text-gray-500 capitalize">{act.type}</span>
-                  <span className="text-xs text-gray-400">
-                    {new Date(act.createdAt).toLocaleString()}
-                  </span>
-                </div>
-                <p className="mt-1 text-sm text-gray-700">{act.message}</p>
-                <p className="text-xs text-gray-400 mt-1">{act.userId?.name}</p>
-              </div>
+          <div className="flex border-b border-gray-200 mb-3">
+            {['activity', 'quotations', 'tasks'].map((t) => (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-3 py-2 text-sm font-medium capitalize border-b-2 -mb-px transition-colors ${
+                  tab === t ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {t}
+              </button>
             ))}
           </div>
+
+          {tab === 'activity' && (
+            <>
+              <form onSubmit={handleAddActivity} className="mb-3 flex gap-2">
+                <select
+                  value={newActivity.type}
+                  onChange={(e) => setNewActivity({ ...newActivity, type: e.target.value })}
+                  className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+                >
+                  <option value="note">Note</option>
+                  <option value="call">Call</option>
+                  <option value="meeting">Meeting</option>
+                  <option value="follow_up">Follow Up</option>
+                </select>
+                <input
+                  required
+                  placeholder="Add a note..."
+                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  value={newActivity.message}
+                  onChange={(e) => setNewActivity({ ...newActivity, message: e.target.value })}
+                />
+                <button
+                  type="submit"
+                  disabled={createActivity.isPending}
+                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm text-white hover:bg-blue-700 disabled:opacity-50"
+                >
+                  Add
+                </button>
+              </form>
+              <div className="space-y-2 max-h-80 overflow-y-auto">
+                {activities?.length === 0 && (
+                  <p className="text-xs text-gray-400">No activity yet.</p>
+                )}
+                {activities?.map((act) => (
+                  <div key={act._id} className="rounded-lg bg-gray-50 p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-medium text-gray-500 capitalize">{act.type}</span>
+                      <span className="text-xs text-gray-400">
+                        {new Date(act.createdAt).toLocaleString()}
+                      </span>
+                    </div>
+                    <p className="mt-1 text-sm text-gray-700">{act.message}</p>
+                    <p className="text-xs text-gray-400 mt-1">{act.userId?.name}</p>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+
+          {tab === 'quotations' && (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {quotations?.length === 0 && (
+                <p className="text-xs text-gray-400">No quotations yet.</p>
+              )}
+              {quotations?.map((q) => (
+                <div key={q._id} className="rounded-lg border border-gray-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-800">{q.quotationNumber}</span>
+                    <span className="text-xs rounded-full bg-gray-100 px-2 py-0.5 capitalize">{q.status}</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">${q.grandTotal?.toLocaleString()} &middot; v{q.version}</p>
+                  <button
+                    onClick={() => downloadQuotationPdf(q._id, `${q.quotationNumber}.pdf`)}
+                    className="mt-1 text-xs text-blue-600 hover:text-blue-700"
+                  >
+                    Download PDF
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {tab === 'tasks' && (
+            <div className="space-y-2 max-h-80 overflow-y-auto">
+              {tasks?.length === 0 && (
+                <p className="text-xs text-gray-400">No tasks yet.</p>
+              )}
+              {tasks?.map((t) => (
+                <div key={t._id} className="rounded-lg border border-gray-200 p-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-800">{t.title}</span>
+                    <span className={`text-xs rounded-full px-2 py-0.5 capitalize ${
+                      t.priority === 'high' ? 'bg-red-100 text-red-700' :
+                      t.priority === 'medium' ? 'bg-yellow-100 text-yellow-700' :
+                      'bg-gray-100 text-gray-600'
+                    }`}>{t.priority}</span>
+                  </div>
+                  {t.dueDate && (
+                    <p className="text-xs text-gray-500 mt-1">Due: {new Date(t.dueDate).toLocaleDateString()}</p>
+                  )}
+                  <span className={`text-xs mt-1 inline-block rounded-full px-2 py-0.5 ${
+                    t.status === 'completed' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                  }`}>{t.status}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

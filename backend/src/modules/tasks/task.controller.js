@@ -4,11 +4,12 @@ const { broadcast } = require('../../services/pusher');
 
 exports.list = async (req, res, next) => {
   try {
-    const { status, priority } = req.query;
+    const { status, priority, leadId } = req.query;
     const filter = {};
 
     if (status) filter.status = status;
     if (priority) filter.priority = priority;
+    if (leadId) filter.leadId = leadId;
 
     if (req.user.role === 'bda') {
       filter.assignedTo = req.user._id;
@@ -43,7 +44,11 @@ exports.getById = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    const task = await Task.create(req.body);
+    const task = await Task.create({
+      ...req.body,
+      createdBy: req.user._id,
+      assignedTo: req.body.assignedTo || req.user._id,
+    });
 
     await AuditLog.create({
       userId: req.user._id,

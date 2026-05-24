@@ -141,19 +141,23 @@ exports.generatePdf = async (req, res, next) => {
 
     const tableTop = doc.y;
     doc.fontSize(10).font('Helvetica-Bold');
-    doc.text('Product', 50, tableTop, { width: 200 });
-    doc.text('Qty', 260, tableTop, { width: 50, align: 'right' });
-    doc.text('Unit Price', 320, tableTop, { width: 80, align: 'right' });
-    doc.text('Total', 420, tableTop, { width: 80, align: 'right' });
+    doc.text('Product', 50, tableTop, { width: 150 });
+    doc.text('Qty', 210, tableTop, { width: 40, align: 'right' });
+    doc.text('Price', 260, tableTop, { width: 70, align: 'right' });
+    doc.text('MOQ', 330, tableTop, { width: 50 });
+    doc.text('Delivery', 380, tableTop, { width: 60 });
+    doc.text('Total', 440, tableTop, { width: 80, align: 'right' });
     doc.moveDown();
 
     doc.font('Helvetica');
     let y = doc.y;
     for (const item of quotation.items) {
-      doc.text(item.productName, 50, y, { width: 200 });
-      doc.text(String(item.quantity), 260, y, { width: 50, align: 'right' });
-      doc.text(`$${item.unitPrice.toFixed(2)}`, 320, y, { width: 80, align: 'right' });
-      doc.text(`$${item.totalPrice.toFixed(2)}`, 420, y, { width: 80, align: 'right' });
+      doc.text(item.productName, 50, y, { width: 150 });
+      doc.text(String(item.quantity), 210, y, { width: 40, align: 'right' });
+      doc.text(`$${item.unitPrice.toFixed(2)}`, 260, y, { width: 70, align: 'right' });
+      doc.text(item.moq ? `MOQ: ${item.moq}` : '', 330, y, { width: 50 });
+      doc.text(item.deliveryEstimate || '', 380, y, { width: 60 });
+      doc.text(`$${item.totalPrice.toFixed(2)}`, 440, y, { width: 80, align: 'right' });
       y += 20;
     }
 
