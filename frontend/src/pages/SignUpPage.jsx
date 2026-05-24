@@ -2,7 +2,7 @@ import { SignUp } from '@clerk/clerk-react'
 
 export default function SignUpPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50/70">
       <SignUp path="/sign-up" routing="path" signInUrl="/sign-in" />
     </div>
   )

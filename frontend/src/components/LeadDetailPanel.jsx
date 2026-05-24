@@ -45,32 +45,22 @@ export default function LeadDetailPanel({ leadId, onClose }) {
 
   if (isLoading || !lead) {
     return (
-      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-lg bg-white shadow-xl border-l border-gray-200 p-6">
+      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-lg bg-white/90 backdrop-blur-sm shadow-xl border-l border-gray-200 p-6">
         <p className="text-gray-500">Loading...</p>
       </div>
     )
   }
 
-  const handleSave = async () => {
-    await updateLead.mutateAsync({ id: lead._id, data: form })
-    setEditing(false)
-  }
-
-  const handleStageChange = async (stage) => {
-    await stageTransition.mutateAsync({ id: lead._id, stage })
-  }
-
-  const handleAddActivity = async (e) => {
-    e.preventDefault()
-    if (!newActivity.message.trim()) return
-    await createActivity.mutateAsync({ leadId: lead._id, ...newActivity })
-    setNewActivity({ type: 'note', message: '' })
-  }
-
   const currentIdx = stages.indexOf(lead.currentStage)
 
+  const handleStageChange = async (stage) => {
+    try {
+      await stageTransition.mutateAsync({ id: lead._id, stage })
+    } catch {}
+  }
+
   return (
-    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-lg bg-white shadow-xl border-l border-gray-200 flex flex-col">
+    <div className="fixed inset-y-0 right-0 z-40 w-full max-w-lg bg-white/90 backdrop-blur-sm shadow-xl border-l border-gray-200 flex flex-col">
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <h3 className="text-lg font-bold text-gray-800">{lead.companyName}</h3>
         <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>

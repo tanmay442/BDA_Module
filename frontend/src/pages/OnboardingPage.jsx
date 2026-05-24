@@ -36,8 +36,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md rounded-xl bg-white p-8 shadow-lg">
+    <div className="flex min-h-screen items-center justify-center bg-gray-50/70 px-4">
+      <div className="w-full max-w-md rounded-xl bg-white/90 backdrop-blur-sm p-8 shadow-lg">
         <div className="text-center mb-6">
           <span className="text-4xl">🏭</span>
           <h1 className="mt-2 text-xl font-bold text-gray-800">Welcome to SalesOps</h1>

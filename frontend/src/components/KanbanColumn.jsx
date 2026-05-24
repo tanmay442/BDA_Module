@@ -11,7 +11,7 @@ const stageLabels = {
   lost: 'Lost',
 }
 
-const stageColors = {
+const stageAccents = {
   new: 'border-t-gray-400',
   contacted: 'border-t-blue-400',
   requirement_gathered: 'border-t-yellow-400',
@@ -24,7 +24,7 @@ const stageColors = {
 export default function KanbanColumn({ stage, leads, onLeadClick }) {
   return (
     <div
-      className={`flex w-64 shrink-0 flex-col rounded-lg border border-gray-200 bg-gray-50 border-t-4 ${stageColors[stage]}`}
+      className={`flex w-64 shrink-0 flex-col rounded-lg border border-gray-100 bg-white/40 backdrop-blur-sm border-t-4 ${stageAccents[stage]}`}
     >
       <div className="flex items-center justify-between px-3 py-2">
         <h3 className="text-sm font-semibold text-gray-700">
@@ -39,8 +39,8 @@ export default function KanbanColumn({ stage, leads, onLeadClick }) {
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`flex flex-col gap-2 p-2 min-h-[200px] transition-colors ${
-              snapshot.isDraggingOver ? 'bg-blue-50' : ''
+            className={`flex flex-1 flex-col gap-2 overflow-y-auto p-2 transition-colors ${
+              snapshot.isDraggingOver ? 'bg-blue-50/50' : ''
             }`}
           >
             {leads.map((lead, i) => (

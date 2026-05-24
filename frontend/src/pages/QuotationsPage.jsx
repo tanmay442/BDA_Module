@@ -57,7 +57,7 @@ export default function QuotationsPage() {
       ) : (
         <div className="space-y-2">
           {quotations?.map((q) => (
-            <div key={q._id} className="rounded-lg border border-gray-200 bg-white">
+            <div key={q._id} className="rounded-lg border border-gray-200 bg-white/80 backdrop-blur-sm">
               <div className="flex items-center gap-4 p-4">
                 <button
                   onClick={() => setEditingQuote(q)}

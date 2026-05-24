@@ -1,4 +1,6 @@
+import { useState } from 'react'
 import { useUsers, useCurrentUser, useUpdateRole } from '../hooks/useUsers'
+import UserReportPanel from '../components/UserReportPanel'
 
 const roleColors = {
   admin: 'bg-purple-100 text-purple-700',
@@ -10,15 +12,18 @@ export default function UsersPage() {
   const { data: currentUser } = useCurrentUser()
   const { data: users, isLoading } = useUsers()
   const updateRole = useUpdateRole()
+  const [selectedUser, setSelectedUser] = useState(null)
 
   const handleRoleChange = (userId, role) => {
     updateRole.mutate({ id: userId, role })
   }
 
+  const isManager = currentUser?.role === 'admin' || currentUser?.role === 'manager'
+
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-2xl font-bold text-gray-800">Users</h2>
+        <h2 className="text-xl font-bold text-gray-800">Users</h2>
       </div>
 
       {isLoading ? (
@@ -26,7 +31,7 @@ export default function UsersPage() {
       ) : users?.length === 0 ? (
         <p className="text-gray-400">No users found.</p>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white">
+        <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white/80 backdrop-blur-sm">
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase text-gray-500">
@@ -39,7 +44,11 @@ export default function UsersPage() {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {users?.map((user) => (
-                <tr key={user._id} className="hover:bg-gray-50">
+                <tr
+                  key={user._id}
+                  className={`${isManager ? 'cursor-pointer' : ''} hover:bg-gray-50`}
+                  onClick={() => isManager && setSelectedUser(user)}
+                >
                   <td className="px-4 py-3 font-medium text-gray-800">
                     {user.name}
                     {currentUser?._id === user._id && (
@@ -53,6 +62,7 @@ export default function UsersPage() {
                         value={user.role}
                         onChange={(e) => handleRoleChange(user._id, e.target.value)}
                         className="rounded border border-gray-300 px-2 py-1 text-xs"
+                        onClick={(e) => e.stopPropagation()}
                       >
                         <option value="bda">BDA</option>
                         <option value="manager">Manager</option>
@@ -73,6 +83,13 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
+      )}
+
+      {selectedUser && (
+        <>
+          <div className="fixed inset-0 z-30 bg-black/20" onClick={() => setSelectedUser(null)} />
+          <UserReportPanel user={selectedUser} onClose={() => setSelectedUser(null)} />
+        </>
       )}
     </div>
   )

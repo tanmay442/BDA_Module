@@ -1,62 +1,76 @@
-import { NavLink } from 'react-router-dom'
-import { useCurrentUser } from '../hooks/useUsers'
+import { useLocation, Link } from 'react-router-dom'
+import { Menu01 } from '@untitledui/icons'
+import { SidebarNavigationSectionDividers } from './application/app-navigation/sidebar-navigation/sidebar-section-dividers'
+import { appNavItems } from './application/app-navigation/app-nav-config'
 
-const links = [
-  { to: '/', label: 'Dashboard', icon: '📊' },
-  { to: '/leads', label: 'Leads', icon: '🎯' },
-  { to: '/tasks', label: 'Tasks', icon: '✅' },
-  { to: '/quotations', label: 'Quotations', icon: '📄' },
-  { to: '/users', label: 'Users', icon: '👥' },
-]
-
-export default function Sidebar({ open, onClose }) {
-  const { data: currentUser } = useCurrentUser()
+export default function Sidebar({ open, onClose, onToggleSidebar, collapsed }) {
+  const location = useLocation()
 
   return (
     <>
-      <aside className="hidden w-64 flex-col border-r border-gray-200 bg-white lg:flex">
-        <SidebarContent company={currentUser?.company} />
+      <aside className={`hidden flex-col border-r border-border-secondary backdrop-blur-sm lg:flex h-screen bg-white/70 ${collapsed ? 'w-12 items-center pt-4' : 'w-52'}`}>
+        {collapsed ? (
+          <div className="flex flex-col items-center gap-1">
+            <button
+              onClick={onToggleSidebar}
+              className="flex size-9 items-center justify-center rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover"
+            >
+              <Menu01 className="size-5" />
+            </button>
+            <div className="mt-4 flex flex-col items-center gap-0.5">
+              {appNavItems.filter((i) => !i.divider).map((item) => {
+                const Icon = item.icon
+                const isActive = location.pathname === item.href
+                return (
+                  <Link
+                    key={item.href || item.label}
+                    to={item.href || '#'}
+                    className={`flex size-9 items-center justify-center rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-secondary text-fg-quaternary_hover'
+                        : 'text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover'
+                    }`}
+                  >
+                    {Icon && <Icon className="size-5" />}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-start px-3 pt-4 pb-2 shrink-0">
+              <button
+                onClick={onToggleSidebar}
+                className="flex size-9 items-center justify-center rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover"
+              >
+                <Menu01 className="size-5" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <SidebarNavigationSectionDividers items={appNavItems} />
+            </div>
+          </>
+        )}
       </aside>
       {open && (
         <div className="fixed inset-0 z-40 lg:hidden">
           <div className="fixed inset-0 bg-black/40" onClick={onClose} />
-          <aside className="relative flex w-64 flex-col bg-white h-full">
-            <div className="flex h-16 items-center justify-between border-b border-gray-200 px-6">
-              <div className="flex items-center gap-2">
-                <span className="text-xl">🏭</span>
-                <span className="font-bold text-gray-800">{currentUser?.company || 'SalesOps'}</span>
-              </div>
-              <button onClick={onClose} className="text-gray-500 hover:text-gray-700 text-xl leading-none">&times;</button>
+          <aside className="relative flex w-64 flex-col bg-white/80 backdrop-blur-sm h-full">
+            <div className="flex items-center justify-start px-3 pt-4 pb-2 shrink-0">
+              <button
+                onClick={onClose}
+                className="flex size-9 items-center justify-center rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover"
+              >
+                <Menu01 className="size-5" />
+              </button>
             </div>
-            <SidebarContent onClick={onClose} />
+            <div className="flex-1 overflow-y-auto">
+              <SidebarNavigationSectionDividers items={appNavItems} />
+            </div>
           </aside>
         </div>
       )}
     </>
-  )
-}
-
-function SidebarContent({ onClick, company }) {
-  return (
-    <nav className="flex-1 space-y-1 p-4">
-      {links.map((link) => (
-        <NavLink
-          key={link.to}
-          to={link.to}
-          end={link.to === '/'}
-          onClick={onClick}
-          className={({ isActive }) =>
-            `flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
-              isActive
-                ? 'bg-blue-50 text-blue-700'
-                : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-            }`
-          }
-        >
-          <span>{link.icon}</span>
-          {link.label}
-        </NavLink>
-      ))}
-    </nav>
   )
 }

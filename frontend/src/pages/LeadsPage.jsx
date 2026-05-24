@@ -10,9 +10,9 @@ export default function LeadsPage() {
   const [stageFilter, setStageFilter] = useState('')
 
   return (
-    <div>
+    <div className="flex h-full flex-col">
       <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-2xl font-bold text-gray-800">Lead Pipeline</h2>
+        <h2 className="text-xl font-bold text-gray-800">Lead Pipeline</h2>
         <button
           onClick={() => setShowCreate(true)}
           className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
@@ -23,7 +23,7 @@ export default function LeadsPage() {
       <div className="mb-4 flex gap-2">
         <input
           placeholder="Search leads..."
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm flex-1 max-w-xs"
+          className="max-w-xs flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
@@ -42,7 +42,9 @@ export default function LeadsPage() {
           <option value="lost">Lost</option>
         </select>
       </div>
-      <KanbanBoard onLeadClick={setSelectedLeadId} search={search} stageFilter={stageFilter} />
+      <div className="flex-1">
+        <KanbanBoard onLeadClick={setSelectedLeadId} search={search} stageFilter={stageFilter} />
+      </div>
       {selectedLeadId && (
         <>
           <div className="fixed inset-0 z-30 bg-black/20" onClick={() => setSelectedLeadId(null)} />

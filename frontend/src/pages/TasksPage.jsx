@@ -65,7 +65,7 @@ export default function TasksPage() {
           {tasks?.map((task) => (
             <div
               key={task._id}
-              className={`flex items-center gap-4 rounded-lg border border-gray-200 bg-white p-4 ${
+              className={`flex items-center gap-4 rounded-lg border border-gray-200 bg-white/80 backdrop-blur-sm p-4 ${
                 task.status === 'completed' ? 'opacity-60' : ''
               }`}
             >

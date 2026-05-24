@@ -1,13 +1,13 @@
 import { Draggable } from '@hello-pangea/dnd'
 
-const stageColors = {
-  new: 'bg-gray-100 border-gray-300',
-  contacted: 'bg-blue-50 border-blue-300',
-  requirement_gathered: 'bg-yellow-50 border-yellow-300',
-  quotation_sent: 'bg-purple-50 border-purple-300',
-  negotiation: 'bg-orange-50 border-orange-300',
-  won: 'bg-green-50 border-green-300',
-  lost: 'bg-red-50 border-red-300',
+const accentColors = {
+  new: 'border-l-gray-400',
+  contacted: 'border-l-blue-400',
+  requirement_gathered: 'border-l-yellow-400',
+  quotation_sent: 'border-l-purple-400',
+  negotiation: 'border-l-orange-400',
+  won: 'border-l-green-400',
+  lost: 'border-l-red-400',
 }
 
 export default function LeadCard({ lead, index, onClick }) {
@@ -19,21 +19,23 @@ export default function LeadCard({ lead, index, onClick }) {
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={onClick}
-          className={`cursor-pointer rounded-lg border-2 p-3 shadow-sm transition-shadow ${
+          className={`cursor-pointer rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow ${
             snapshot.isDragging ? 'shadow-lg ring-2 ring-blue-400' : 'hover:shadow-md'
-          } ${stageColors[lead.currentStage] || 'bg-white border-gray-200'}`}
+          } border-l-4 ${accentColors[lead.currentStage] || 'border-l-gray-200'}`}
         >
-          <h4 className="font-semibold text-gray-800">{lead.companyName}</h4>
-          {lead.contactPerson && (
-            <p className="mt-1 text-sm text-gray-500">{lead.contactPerson}</p>
-          )}
-          <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-            <span>${(lead.expectedDealValue || 0).toLocaleString()}</span>
-            {lead.assignedTo && (
-              <span className="truncate max-w-[100px]">
-                {lead.assignedTo.name || 'Unassigned'}
-              </span>
+          <div className="p-3">
+            <h4 className="font-semibold text-gray-800">{lead.companyName}</h4>
+            {lead.contactPerson && (
+              <p className="mt-1 text-sm text-gray-500">{lead.contactPerson}</p>
             )}
+            <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
+              <span>${(lead.expectedDealValue || 0).toLocaleString()}</span>
+              {lead.assignedTo && (
+                <span className="max-w-[100px] truncate">
+                  {lead.assignedTo.name || 'Unassigned'}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       )}

@@ -60,7 +60,7 @@ export default function KanbanBoard({ onLeadClick, search, stageFilter }) {
 
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
+      <div className="flex h-[calc(100vh-250px)] gap-4 overflow-x-auto overflow-y-hidden pb-4 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent">
         {stages.map((stage) => (
           <KanbanColumn key={stage} stage={stage} leads={grouped[stage] || []} onLeadClick={onLeadClick} />
         ))}
