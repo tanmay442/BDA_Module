@@ -8,6 +8,7 @@ export function useQuotations(filters = {}) {
   return useQuery({
     queryKey: ['quotations', filters],
     queryFn: () => api.get('/quotations', { params }).then((r) => r.data),
+    refetchInterval: 30_000,
   })
 }
 
@@ -35,7 +36,12 @@ export function useDeleteQuotation() {
   })
 }
 
-export function getQuotationPdfUrl(id) {
-  const base = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'
-  return `${base}/quotations/${id}/pdf`
+export async function downloadQuotationPdf(id, filename) {
+  const res = await api.get(`/quotations/${id}/pdf`, { responseType: 'blob' })
+  const url = URL.createObjectURL(res.data)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = filename || `${id}.pdf`
+  a.click()
+  URL.revokeObjectURL(url)
 }

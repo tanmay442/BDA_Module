@@ -1,5 +1,6 @@
 const Task = require('./task.model');
 const AuditLog = require('../auditLogs/auditLog.model');
+const { broadcast } = require('../../services/pusher');
 
 exports.list = async (req, res, next) => {
   try {
@@ -52,6 +53,7 @@ exports.create = async (req, res, next) => {
       newValue: { title: task.title, status: task.status },
     });
 
+    broadcast('tasks', 'task:created', { id: task._id });
     res.status(201).json(task);
   } catch (error) {
     next(error);
@@ -69,6 +71,7 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    broadcast('tasks', 'task:updated', { id: task._id });
     res.json(task);
   } catch (error) {
     next(error);
@@ -83,6 +86,7 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ message: 'Task not found' });
     }
 
+    broadcast('tasks', 'task:deleted', { id: task._id });
     res.json({ message: 'Task deleted' });
   } catch (error) {
     next(error);

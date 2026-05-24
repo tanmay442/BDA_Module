@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setTokenProvider } from './services/api'
+import usePusher from './hooks/usePusher'
 import AppLayout from './components/AppLayout'
 import SignInPage from './pages/SignInPage'
 import SignUpPage from './pages/SignUpPage'
@@ -18,6 +19,7 @@ const queryClient = new QueryClient()
 function ClerkTokenProvider({ children }) {
   const { getToken } = useAuth()
   React.useEffect(() => { setTokenProvider(getToken) }, [getToken])
+  usePusher()
   return children
 }
 

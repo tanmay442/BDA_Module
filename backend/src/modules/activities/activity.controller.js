@@ -1,4 +1,5 @@
 const Activity = require('./activity.model');
+const { broadcast } = require('../../services/pusher');
 
 exports.list = async (req, res, next) => {
   try {
@@ -26,6 +27,7 @@ exports.create = async (req, res, next) => {
 
     const populated = await activity.populate('userId', 'name email');
 
+    broadcast('activities', 'activity:created', { id: activity._id, leadId: activity.leadId });
     res.status(201).json(populated);
   } catch (error) {
     next(error);

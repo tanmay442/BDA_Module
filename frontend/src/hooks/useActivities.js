@@ -6,6 +6,7 @@ export function useActivities(leadId) {
     queryKey: ['activities', leadId],
     queryFn: () => api.get('/activities', { params: { leadId } }).then((r) => r.data),
     enabled: !!leadId,
+    refetchInterval: 30_000,
   })
 }
 

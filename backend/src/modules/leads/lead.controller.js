@@ -1,5 +1,6 @@
 const Lead = require('./lead.model');
 const AuditLog = require('../auditLogs/auditLog.model');
+const { broadcast } = require('../../services/pusher');
 
 exports.list = async (req, res, next) => {
   try {
@@ -63,6 +64,7 @@ exports.create = async (req, res, next) => {
       newValue: { currentStage: lead.currentStage },
     });
 
+    broadcast('leads', 'lead:created', { id: lead._id });
     res.status(201).json(lead);
   } catch (error) {
     next(error);
@@ -80,6 +82,7 @@ exports.update = async (req, res, next) => {
       return res.status(404).json({ message: 'Lead not found' });
     }
 
+    broadcast('leads', 'lead:updated', { id: lead._id });
     res.json(lead);
   } catch (error) {
     next(error);
@@ -94,6 +97,7 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ message: 'Lead not found' });
     }
 
+    broadcast('leads', 'lead:deleted', { id: lead._id });
     res.json({ message: 'Lead deleted' });
   } catch (error) {
     next(error);
@@ -127,6 +131,7 @@ exports.stageTransition = async (req, res, next) => {
       newValue: { currentStage: stage },
     });
 
+    broadcast('leads', 'lead:stage_changed', { id: lead._id, stage, oldStage });
     res.json(lead);
   } catch (error) {
     next(error);

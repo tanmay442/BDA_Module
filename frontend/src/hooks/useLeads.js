@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import api from '../services/api'
 
 export function useLeads(stage) {
-  const params = stage ? { stage } : {}
   return useQuery({
     queryKey: ['leads', stage],
-    queryFn: () => api.get('/leads', { params }).then((r) => r.data),
+    queryFn: () => api.get('/leads', { params: stage ? { stage } : {} }).then(r => r.data),
+    refetchInterval: 30_000,
   })
 }
 

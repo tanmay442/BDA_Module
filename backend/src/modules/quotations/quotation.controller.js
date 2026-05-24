@@ -1,6 +1,7 @@
 const PDFDocument = require('pdfkit');
 const Quotation = require('./quotation.model');
 const AuditLog = require('../auditLogs/auditLog.model');
+const { broadcast } = require('../../services/pusher');
 
 const generateQuotationNumber = async () => {
   const count = await Quotation.countDocuments();
@@ -61,6 +62,7 @@ exports.create = async (req, res, next) => {
       newValue: { quotationNumber, status: quotation.status },
     });
 
+    broadcast('quotations', 'quotation:created', { id: quotation._id });
     res.status(201).json(quotation);
   } catch (error) {
     next(error);
@@ -84,6 +86,7 @@ exports.update = async (req, res, next) => {
       runValidators: true,
     });
 
+    broadcast('quotations', 'quotation:updated', { id: quotation._id });
     res.json(quotation);
   } catch (error) {
     next(error);
@@ -98,6 +101,7 @@ exports.remove = async (req, res, next) => {
       return res.status(404).json({ message: 'Quotation not found' });
     }
 
+    broadcast('quotations', 'quotation:deleted', { id: quotation._id });
     res.json({ message: 'Quotation deleted' });
   } catch (error) {
     next(error);

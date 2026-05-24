@@ -5,6 +5,7 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ['users', 'me'],
     queryFn: () => api.get('/users/me').then(r => r.data),
+    refetchInterval: 30_000,
   })
 }
 
@@ -12,6 +13,7 @@ export function useUsers() {
   return useQuery({
     queryKey: ['users'],
     queryFn: () => api.get('/users').then(r => r.data),
+    refetchInterval: 30_000,
   })
 }
 

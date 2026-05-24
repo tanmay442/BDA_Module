@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useQuotations, useDeleteQuotation, getQuotationPdfUrl } from '../hooks/useQuotations'
+import { useQuotations, useDeleteQuotation, downloadQuotationPdf } from '../hooks/useQuotations'
 import CreateQuotationModal from '../components/CreateQuotationModal'
 
 const statusColors = {
@@ -63,14 +63,12 @@ export default function QuotationsPage() {
               <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${statusColors[q.status] || 'bg-gray-100'}`}>
                 {q.status}
               </span>
-              <a
-                href={getQuotationPdfUrl(q._id)}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={() => downloadQuotationPdf(q._id, `${q.quotationNumber}.pdf`)}
                 className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-50"
               >
                 PDF
-              </a>
+              </button>
               <button
                 onClick={() => deleteQuote.mutate(q._id)}
                 className="text-sm text-red-400 hover:text-red-600"
