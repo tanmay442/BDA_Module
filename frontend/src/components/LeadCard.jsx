@@ -27,7 +27,7 @@ export default function LeadCard({ lead, index, onClick }) {
               <span>${(lead.expectedDealValue || 0).toLocaleString()}</span>
               {lead.assignedTo && (
                 <span className="max-w-[100px] truncate">
-                  {lead.assignedTo.name || 'Unassigned'}
+                  {lead.assignedTo?.name || 'Unassigned'}
                 </span>
               )}
             </div>

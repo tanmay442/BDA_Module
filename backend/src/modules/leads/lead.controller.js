@@ -5,6 +5,7 @@ const Client = require('../clients/client.model');
 const { broadcast } = require('../../services/pusher');
 const asyncHandler = require('../../utils/asyncHandler');
 const { isElevated, ensureCanRead, ensureCanModify, pick } = require('../../utils/permissions');
+const { STAGES } = require('../../constants/stages');
 
 const LEAD_UPDATE_FIELDS = [
   'companyName',
@@ -147,11 +148,16 @@ exports.stageTransition = asyncHandler(async (req, res) => {
     return res.status(400).json({ message: 'Stage is required' });
   }
 
+  if (!STAGES.includes(stage)) {
+    return res.status(400).json({ message: `Invalid stage. Must be one of: ${STAGES.join(', ')}` });
+  }
+
   const lead = await Lead.findById(req.params.id);
   ensureCanModify(req.user, lead, 'Lead');
 
   const oldStage = lead.currentStage;
   const isFirstTransitionToStage = oldStage !== stage;
+
   lead.currentStage = stage;
   await lead.save();
 

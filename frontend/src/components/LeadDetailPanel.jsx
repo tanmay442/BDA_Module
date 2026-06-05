@@ -116,7 +116,7 @@ export default function LeadDetailPanel({ leadId, onClose }) {
         </div>
 
         {editing ? (
-          <div className="space-y-3">
+          <div key={lead._id} className="space-y-3">
             <input
               className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
               defaultValue={lead.contactPerson}
