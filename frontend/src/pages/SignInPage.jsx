@@ -35,7 +35,7 @@ export default function SignInPage() {
               </div>
               <div className="flex items-center gap-4">
                 <span className="hidden text-xs text-gray-400 sm:inline">
-                  Personal MERN-stack project
+                  Personal full-stack project
                 </span>
                 <a
                   href={GITHUB_URL}
@@ -60,7 +60,7 @@ export default function SignInPage() {
                   A sales-ops dashboard for manufacturing teams.
                 </h1>
                 <p className="mt-3 max-w-md text-sm leading-relaxed text-gray-600">
-                  A personal MERN project that takes a manufacturing enquiry
+                  A personal full-stack project that takes a manufacturing enquiry
                   from a first website form all the way to a signed quotation
                   and a closed deal, in one place.
                 </p>
@@ -84,7 +84,7 @@ export default function SignInPage() {
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-900" />
                     <span>
                       <span className="font-medium text-gray-900">Tasks, activity, reminders</span>
-                      <span className="text-gray-500"> &middot; with a bell for due and overdue</span>
+                      <span className="text-gray-500"> &middot; with due-today and overdue alerts</span>
                     </span>
                   </li>
                   <li className="flex gap-2.5">
@@ -92,6 +92,13 @@ export default function SignInPage() {
                     <span>
                       <span className="font-medium text-gray-900">Role-based views</span>
                       <span className="text-gray-500"> &middot; manager sees the team, BDA sees their own</span>
+                    </span>
+                  </li>
+                  <li className="flex gap-2.5">
+                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-gray-900" />
+                    <span>
+                      <span className="font-medium text-gray-900">Real-time sync</span>
+                      <span className="text-gray-500"> &middot; Pusher delivers live updates without polling</span>
                     </span>
                   </li>
                 </ul>
@@ -106,10 +113,10 @@ export default function SignInPage() {
                 </div>
 
                 <p className="mt-5 max-w-md text-[11px] leading-relaxed text-amber-900">
-                  <span className="font-semibold">Demo notice</span> &middot; This
-                  is a personal portfolio project, not a production system. In
-                  a real deployment, only users invited by an admin would
-                  reach the company dashboard.
+                  <span className="font-semibold">Demo mode</span> &middot; After signing in, a
+                  floating switch lets you toggle between demo roles (BDA / Manager / Admin)
+                  without creating multiple accounts. This is a personal portfolio project, not a
+                  production system.
                 </p>
               </section>
 
@@ -149,9 +156,9 @@ export default function SignInPage() {
 
           <footer className="h-12 shrink-0 border-t border-gray-100">
             <div className="mx-auto flex h-full max-w-6xl items-center justify-between px-6 text-[11px] text-gray-400">
-              <p>SalesOps &mdash; personal MERN-stack project.</p>
+              <p>SalesOps &mdash; personal full-stack project.</p>
               <div className="flex items-center gap-4">
-                <span>React &middot; Vite &middot; Node &middot; Express &middot; MongoDB</span>
+                <span>Vite &middot; React &middot; Express &middot; MongoDB &middot; Clerk &middot; Pusher</span>
                 <a
                   href={REPO_URL}
                   target="_blank"
