@@ -37,3 +37,14 @@ export function useDemoSwitchRole() {
     },
   })
 }
+
+export function useUserReport(userId, options = {}) {
+  return useQuery({
+    queryKey: ['users', userId, 'report'],
+    queryFn: () => api.get(`/users/${userId}/report`).then(r => r.data),
+    enabled: !!userId,
+    staleTime: 30_000,
+    refetchIntervalInBackground: false,
+    ...options,
+  })
+}
