@@ -1,5 +1,7 @@
 const { Router } = require('express');
 const { authenticate, authorize } = require('../../middleware/auth');
+const { validate } = require('../../middleware/validate');
+const { taskCreate, taskUpdate } = require('../../validators/dto');
 const ctrl = require('./task.controller');
 
 const router = Router();
@@ -8,8 +10,8 @@ router.use(authenticate);
 
 router.get('/', ctrl.list);
 router.get('/:id', ctrl.getById);
-router.post('/', ctrl.create);
-router.patch('/:id', ctrl.update);
+router.post('/', validate(taskCreate), ctrl.create);
+router.patch('/:id', validate(taskUpdate), ctrl.update);
 router.delete('/:id', authorize('admin', 'manager'), ctrl.remove);
 
 module.exports = router;
