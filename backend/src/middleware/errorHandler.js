@@ -15,9 +15,19 @@ const errorHandler = (err, req, res, next) => {
     return res.status(400).json({ message: 'Invalid ID format' });
   }
 
-  res.status(err.status || 500).json({
-    message: err.message || 'Internal server error',
-  });
+  if (err.name === 'ZodError') {
+    return res.status(400).json({
+      message: 'Validation error',
+      errors: err.errors.map((e) => ({ path: e.path.join('.'), message: e.message })),
+    });
+  }
+
+  const status = err.status || 500;
+  const message = status >= 500 && process.env.NODE_ENV === 'production'
+    ? 'Internal server error'
+    : err.message || 'Internal server error';
+
+  res.status(status).json({ message });
 };
 
 module.exports = errorHandler;

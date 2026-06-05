@@ -7,42 +7,17 @@ const errorHandler = require('./middleware/errorHandler');
 
 const app = express();
 
-app.use(cors());
-app.use(express.json());
+const isProduction = process.env.NODE_ENV === 'production';
+
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || (isProduction ? false : true),
+    credentials: false,
+  })
+);
+app.use(express.json({ limit: '1mb' }));
 app.use(clerkMiddleware({ publishableKey: process.env.CLERK_PUBLISHABLE_KEY }));
 
-// 1. DATABASE CONNECTION MIDDLEWARE
-app.use(async (req, res, next) => {
-  try {
-    await connectDB();
-    next();
-  } catch (err) {
-    next(err);
-  }
-});
-
-// 2. PATH NORMALIZATION MIDDLEWARE FOR VERCEL SERVERLESS
-// This ensures that Express receives standard "/api/..." paths, 
-// regardless of how Vercel's internal gateway rewrites the request.
-app.use((req, res, next) => {
-  if (req.url) {
-    // Strip "index.js" or "/api/index.js" if appended by Vercel's gateway
-    if (req.url.includes('index.js')) {
-      req.url = req.url.replace('/api/index.js', '').replace('index.js', '');
-    }
-    
-    // Prepend "/api" if Vercel stripped it off
-    if (!req.url.startsWith('/api')) {
-      req.url = '/api' + req.url;
-    }
-    
-    // Clean up any potential double-slashes (e.g., /api//users/me -> /api/users/me)
-    req.url = req.url.replace(/\/+/g, '/');
-  }
-  next();
-});
-
-// 3. API ROUTES
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
@@ -58,10 +33,21 @@ app.use('/api/reminders', require('./modules/reminders/reminder.routes'));
 
 app.use(errorHandler);
 
-if (process.env.NODE_ENV !== 'test' && !process.env.VERCEL) {
+const startServer = async () => {
+  try {
+    await connectDB();
+  } catch (err) {
+    console.error('Failed to connect to MongoDB on startup:', err.message);
+    process.exit(1);
+  }
+
   app.listen(process.env.PORT || 5000, () => {
     console.log(`Server running on port ${process.env.PORT || 5000}`);
   });
+};
+
+if (require.main === module) {
+  startServer();
 }
 
 module.exports = app;
