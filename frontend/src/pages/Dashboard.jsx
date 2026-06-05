@@ -22,9 +22,9 @@ export default function Dashboard() {
   const updateTask = useUpdateTask()
 
   const isManager = currentUser?.role === 'admin' || currentUser?.role === 'manager'
-  const now = new Date()
-  const monthStart = startOfMonth(now)
-  const monthEnd = endOfMonth(now)
+  const [now] = useState(() => new Date())
+  const monthStart = useMemo(() => startOfMonth(now), [now])
+  const monthEnd = useMemo(() => endOfMonth(now), [now])
 
   /* ── computed shared ── */
   const activeLeads = useMemo(() => (leads || []).filter((l) => l.currentStage !== 'won' && l.currentStage !== 'lost'), [leads])
