@@ -65,5 +65,9 @@ const leadSchema = new mongoose.Schema(
 leadSchema.index({ currentStage: 1 });
 leadSchema.index({ assignedTo: 1 });
 leadSchema.index({ companyName: 1 });
+leadSchema.index(
+  { companyName: 'text', contactPerson: 'text', email: 'text' },
+  { name: 'lead_text_search', weights: { companyName: 3, contactPerson: 2, email: 1 } }
+);
 
 module.exports = mongoose.model('Lead', leadSchema);

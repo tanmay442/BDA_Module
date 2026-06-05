@@ -26,11 +26,16 @@ exports.list = asyncHandler(async (req, res) => {
   if (stage) filter.currentStage = stage;
   if (assignedTo) filter.assignedTo = assignedTo;
   if (search) {
-    filter.$or = [
-      { companyName: { $regex: search, $options: 'i' } },
-      { contactPerson: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-    ];
+    const trimmed = String(search).trim();
+    if (trimmed.length > 0) {
+      const safe = trimmed.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      filter.$or = [
+        { $text: { $search: trimmed } },
+        { companyName: { $regex: `^${safe}`, $options: 'i' } },
+        { contactPerson: { $regex: `^${safe}`, $options: 'i' } },
+        { email: { $regex: `^${safe}`, $options: 'i' } },
+      ];
+    }
   }
 
   if (req.user.role === 'bda') {
@@ -40,7 +45,7 @@ exports.list = asyncHandler(async (req, res) => {
   const leads = await Lead.find(filter)
     .populate('assignedTo', 'name email')
     .populate('createdBy', 'name email')
-    .sort('-createdAt');
+    .sort(search ? { score: { $meta: 'textScore' } } : '-createdAt');
 
   res.json(leads);
 });
