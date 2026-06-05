@@ -7,6 +7,7 @@ import usePusher from './hooks/usePusher'
 import AppLayout from './components/AppLayout'
 import DemoRoleSwitcher from './components/DemoRoleSwitcher'
 import ErrorBoundary from './components/ErrorBoundary'
+import { FullPageLoader } from './components/FullPageLoader'
 import { useCurrentUser } from './hooks/useUsers'
 import Grainient from './components/Grainient'
 import SignInPage from './pages/SignInPage'
@@ -45,9 +46,9 @@ function ProtectedRoute() {
 function OnboardingGate() {
   const { data: currentUser, isLoading } = useCurrentUser()
 
-  if (isLoading) return null
+  if (isLoading) return <FullPageLoader label="Loading workspace…" />
 
-  if (currentUser && (!currentUser.company || !currentUser.role)) {
+  if (currentUser && !currentUser.company) {
     return <OnboardingPage />
   }
 
