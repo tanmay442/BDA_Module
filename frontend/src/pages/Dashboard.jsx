@@ -1,151 +1,63 @@
 import { useMemo, useState } from 'react'
-import {
-  startOfMonth, endOfMonth, isWithinInterval, isToday, subDays,
-} from 'date-fns'
-import { useLeads } from '../hooks/useLeads'
+import { isToday } from 'date-fns'
 import { useTasks, useUpdateTask } from '../hooks/useTasks'
-import { useQuotations } from '../hooks/useQuotations'
-import { useCurrentUser, useUsers } from '../hooks/useUsers'
+import { useCurrentUser } from '../hooks/useUsers'
+import { useDashboardSummary } from '../hooks/useDashboardSummary'
 import { DollarSign, Target, Activity, FileText, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react'
 import PipelineChart from '@/components/application/charts/PipelineChart'
 import LeadSourcesChart from '@/components/application/charts/LeadSourcesChart'
 import RevenueTrendChart from '@/components/application/charts/RevenueTrendChart'
 import { BarChart } from '@/components/application/charts/bar-chart'
-import { STAGE_LABELS_SHORT as stageLabels, PIPELINE_STAGES } from '../constants/stages'
+import { STAGE_LABELS_SHORT as stageLabels } from '../constants/stages'
 
 export default function Dashboard() {
   const { data: currentUser } = useCurrentUser()
-  const { data: leads } = useLeads()
   const { data: tasks } = useTasks()
-  const { data: quotations } = useQuotations()
-  const { data: users } = useUsers()
   const updateTask = useUpdateTask()
+  const { data: summary, isLoading } = useDashboardSummary()
 
   const isManager = currentUser?.role === 'admin' || currentUser?.role === 'manager'
   const [now] = useState(() => new Date())
-  const monthStart = useMemo(() => startOfMonth(now), [now])
-  const monthEnd = useMemo(() => endOfMonth(now), [now])
 
-  /* ── computed shared ── */
-  const activeLeads = useMemo(() => (leads || []).filter((l) => l.currentStage !== 'won' && l.currentStage !== 'lost'), [leads])
-  const wonLeads = useMemo(() => (leads || []).filter((l) => l.currentStage === 'won'), [leads])
-  const lostLeads = useMemo(() => (leads || []).filter((l) => l.currentStage === 'lost'), [leads])
-  const pendingTasks = useMemo(() => (tasks || []).filter((t) => t.status === 'pending'), [tasks])
-  const tasksDueToday = useMemo(() => pendingTasks.filter((t) => t.dueDate && isToday(new Date(t.dueDate))), [pendingTasks])
-  const totalValue = useMemo(() => (leads || []).reduce((s, l) => s + (l.expectedDealValue || 0), 0), [leads])
-  const wonMtd = useMemo(
-    () => wonLeads.filter((l) => isWithinInterval(new Date(l.createdAt), { start: monthStart, end: monthEnd })),
-    [wonLeads, monthStart, monthEnd],
-  )
-  const winLossRatio = leads?.length
-    ? Math.round((wonLeads.length / (wonLeads.length + lostLeads.length || 1)) * 100)
-    : 0
-
-  /* ── pipeline funnel data ── */
-  const stageCounts = useMemo(() => {
-    const counts = {}
-    for (const lead of leads || []) {
-      counts[lead.currentStage] = (counts[lead.currentStage] || 0) + 1
-    }
-    return counts
-  }, [leads])
-
-  const pipelineData = useMemo(
-    () =>
-      PIPELINE_STAGES
-        .map((stage) => ({
-          stage: stageLabels[stage],
-          leads: stageCounts[stage] || 0,
-        })),
-    [stageCounts],
-  )
-
-  /* ── lead sources donut data ── */
-  const sourceData = useMemo(() => {
-    const counts = {}
-    for (const lead of leads || []) {
-      const s = lead.source || 'Other'
-      counts[s] = (counts[s] || 0) + 1
-    }
-    return Object.entries(counts).map(([name, value]) => ({ name, value }))
-  }, [leads])
-
-  /* ── revenue trend data (monthly expected vs actual) ── */
-  const revenueTrendData = useMemo(() => {
-    if (!leads?.length) return []
-    const months = {}
-    for (const lead of leads) {
-      const d = new Date(lead.createdAt)
-      const key = d.toLocaleDateString('en-US', { month: 'short' })
-      if (!months[key]) months[key] = { month: key, expected: 0, actual: 0 }
-      months[key].expected += lead.expectedDealValue || 0
-      if (lead.currentStage === 'won') months[key].actual += lead.expectedDealValue || 0
-    }
-    const ordered = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-    const nowMonth = now.toLocaleDateString('en-US', { month: 'short' })
-    const idx = ordered.indexOf(nowMonth)
-    const range = ordered.slice(Math.max(0, idx - 5), idx + 1)
-    return range.map((m) => months[m] || { month: m, expected: 0, actual: 0 })
-  }, [leads, now])
-
-  /* ── BDA leaderboard ── */
-  const leadsByBda = useMemo(() => {
-    const map = {}
-    for (const lead of leads || []) {
-      const name = lead.assignedTo?.name || 'Unassigned'
-      if (!map[name]) map[name] = { total: 0, won: 0, value: 0 }
-      map[name].total++
-      map[name].value += lead.expectedDealValue || 0
-      if (lead.currentStage === 'won') map[name].won++
-    }
-    return map
-  }, [leads])
-
-  const barData = useMemo(
-    () =>
-      Object.entries(leadsByBda)
-        .map(([name, stats]) => ({ name, value: stats.value }))
-        .sort((a, b) => b.value - a.value),
-    [leadsByBda],
-  )
-
-  /* ── hot leads (negotiation, top 5) ── */
-  const hotLeads = useMemo(
-    () =>
-      (leads || [])
-        .filter((l) => l.currentStage === 'negotiation')
-        .sort((a, b) => (b.expectedDealValue || 0) - (a.expectedDealValue || 0))
-        .slice(0, 5),
-    [leads],
-  )
-
-  /* ── stalled deals (no update in 14d) ── */
-  const stalledDeals = useMemo(
-    () =>
-      (leads || []).filter((l) => {
-        if (l.currentStage === 'won' || l.currentStage === 'lost') return false
-        return new Date(l.updatedAt) < subDays(now, 14)
-      }),
-    [leads, now],
-  )
-
-  /* ── recent wins ── */
-  const recentWins = useMemo(
-    () => [...wonLeads].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)).slice(0, 5),
-    [wonLeads],
-  )
+  const tasksDueToday = useMemo(() => {
+    if (isManager) return []
+    return (tasks || []).filter((t) => t.status === 'pending' && t.dueDate && isToday(new Date(t.dueDate)))
+  }, [tasks, isManager])
 
   const handleMarkDone = (taskId) => {
     updateTask.mutate({ id: taskId, data: { status: 'completed' } })
   }
 
-  const bdaUsers = users?.filter((u) => u.role === 'bda')?.length || 1
-  const monthlyTarget = isManager ? 500000 * bdaUsers : 500000
-  const monthlyAchieved = wonMtd.reduce((s, l) => s + (l.expectedDealValue || 0), 0)
+  if (isLoading || !summary) {
+    return <div className="py-8 text-center text-sm text-gray-400">Loading dashboard…</div>
+  }
+
+  const {
+    pipeline = [],
+    leadSources = [],
+    totals = {},
+    quotation = {},
+    tasks: taskCounts = {},
+    monthly = {},
+    leaderboard = [],
+    hotLeads = [],
+    recentWins = [],
+    stalledDeals = [],
+  } = summary
+
+  const quotationSentCount = (quotation.byStatus && quotation.byStatus.sent) || 0
+  const totalValue = totals.pipelineValue || 0
+  const monthlyAchieved = monthly.achieved || 0
+  const monthlyTarget = monthly.target || 500_000
+  const pendingApprovals = quotation.pendingApprovals || 0
+
+  const barData = useMemo(
+    () => (leaderboard || []).map((row) => ({ name: row.name, value: row.value })),
+    [leaderboard],
+  )
 
   return (
     <div>
-      {/* ─── Header ─── */}
       <div className="mb-4">
         <h1 className="text-xl font-bold text-gray-900">
           Hello, {currentUser?.name?.split(' ')[0] || 'there'}!
@@ -156,14 +68,13 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* ─── KPI Cards ─── */}
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {isManager ? (
           <>
             <KPICard icon={DollarSign} label="Total Pipeline Value" value={fmtCurrency(totalValue)} />
             <KPICard icon={CheckCircle} label="Revenue Won (MTD)" value={fmtCurrency(monthlyAchieved)} />
-            <KPICard icon={Target} label="Win / Loss Ratio" value={`${winLossRatio}%`} />
-            <KPICard icon={FileText} label="Pending Approvals" value={quotations?.filter((q) => q.status === 'draft' || q.status === 'sent').length || 0} />
+            <KPICard icon={Target} label="Win / Loss Ratio" value={`${totals.winLossRatio || 0}%`} />
+            <KPICard icon={FileText} label="Pending Approvals" value={pendingApprovals} />
           </>
         ) : (
           <>
@@ -181,19 +92,18 @@ export default function Dashboard() {
                 />
               </div>
             </div>
-            <KPICard icon={Activity} label="Active Leads" value={activeLeads.length} />
-            <KPICard icon={FileText} label="Quotations Sent" value={quotations?.filter((q) => q.status === 'sent').length || 0} />
+            <KPICard icon={Activity} label="Active Leads" value={(totals.totalLeads || 0) - (totals.wonCount || 0) - (totals.lostCount || 0)} />
+            <KPICard icon={FileText} label="Quotations Sent" value={quotationSentCount} />
             <KPICard icon={AlertTriangle} label="Tasks Due Today" value={tasksDueToday.length} urgent />
           </>
         )}
       </div>
 
-      {/* ─── Charts Row (Pipeline + Sources / Leaderboard) ─── */}
       <div className="mb-4 grid grid-cols-1 gap-4 lg:grid-cols-5">
         {isManager ? (
           <>
             <div className="lg:col-span-3">
-              <PipelineChart data={pipelineData} />
+              <PipelineChart data={pipeline} />
             </div>
             <div className="lg:col-span-2">
               <BarChart data={barData} />
@@ -202,23 +112,21 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="lg:col-span-3">
-              <PipelineChart data={pipelineData} />
+              <PipelineChart data={pipeline} />
             </div>
             <div className="lg:col-span-2">
-              <LeadSourcesChart data={sourceData} />
+              <LeadSourcesChart data={leadSources} />
             </div>
           </>
         )}
       </div>
 
-      {/* ─── Revenue Trend (manager only) ─── */}
       {isManager && (
         <div className="mb-4">
-          <RevenueTrendChart data={revenueTrendData} />
+          <RevenueTrendChart data={[]} />
         </div>
       )}
 
-      {/* ─── Bottom Widgets (50/50) ─── */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-gray-200 bg-white/80 p-4 backdrop-blur-sm">
           <h3 className="mb-3 text-base font-semibold text-gray-700">
@@ -279,7 +187,7 @@ export default function Dashboard() {
                     <div>
                       <p className="text-sm font-medium text-gray-800">{lead.companyName}</p>
                       <p className="text-xs text-gray-500">
-                        {stageLabels[lead.currentStage]} · {lead.assignedTo?.name || 'Unassigned'}
+                        {stageLabels[lead.currentStage] || lead.currentStage} · {lead.assignedTo?.name || 'Unassigned'}
                       </p>
                     </div>
                     <span className="text-sm font-semibold text-orange-500">
@@ -315,11 +223,9 @@ export default function Dashboard() {
 }
 
 function fmtCurrency(n) {
-  return n >= 1_000_000
-    ? `$${(n / 1_000_000).toFixed(1)}M`
-    : n >= 1_000
-      ? `$${(n / 1_000).toFixed(0)}k`
-      : `$${n.toLocaleString()}`
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}k`
+  return `$${Math.round(n).toLocaleString()}`
 }
 
 function KPICard({ icon: Icon, label, value, urgent }) {

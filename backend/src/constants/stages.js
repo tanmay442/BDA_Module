@@ -33,9 +33,20 @@ const PIPELINE_STAGES = [
   'won',
 ];
 
+const STAGE_LABELS_SHORT = {
+  new: 'New',
+  contacted: 'Contacted',
+  requirement_gathered: 'Requirements',
+  quotation_sent: 'Quotation',
+  negotiation: 'Negotiation',
+  won: 'Won',
+  lost: 'Lost',
+};
+
 module.exports = {
   STAGES,
   STAGE_LABELS,
+  STAGE_LABELS_SHORT,
   STAGE_INDEX,
   QUOTATION_STATUSES,
   TASK_STATUSES,
