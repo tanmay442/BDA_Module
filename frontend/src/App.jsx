@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setTokenProvider } from './services/api'
 import usePusher from './hooks/usePusher'
 import AppLayout from './components/AppLayout'
+import DemoRoleSwitcher from './components/DemoRoleSwitcher'
+import ErrorBoundary from './components/ErrorBoundary'
 import { useCurrentUser } from './hooks/useUsers'
 import Grainient from './components/Grainient'
 import SignInPage from './pages/SignInPage'
@@ -82,6 +84,7 @@ function AppContent() {
           </Route>
           <Route path="*" element={<Navigate to="/sign-in" replace />} />
         </Routes>
+        <DemoRoleSwitcher />
       </BrowserRouter>
     </div>
   )
@@ -92,7 +95,9 @@ export default function App() {
     <ClerkProvider publishableKey={clerkPubKey}>
       <QueryClientProvider client={queryClient}>
         <ClerkTokenProvider>
-          <AppContent />
+          <ErrorBoundary>
+            <AppContent />
+          </ErrorBoundary>
         </ClerkTokenProvider>
       </QueryClientProvider>
     </ClerkProvider>

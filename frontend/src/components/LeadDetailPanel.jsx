@@ -5,29 +5,14 @@ import { useTasks, useCreateTask } from '../hooks/useTasks'
 import { useQuotations, downloadQuotationPdf } from '../hooks/useQuotations'
 import CreateQuotationModal from './CreateQuotationModal'
 import CreateTaskModal from './CreateTaskModal'
+import { STAGES, STAGE_LABELS, LEAD_UPDATE_FIELDS } from '../constants/stages'
 
-const stages = [
-  'new',
-  'contacted',
-  'requirement_gathered',
-  'quotation_sent',
-  'negotiation',
-  'won',
-  'lost',
-]
+const stages = STAGES
 
-const stageLabels = {
-  new: 'New',
-  contacted: 'Contacted',
-  requirement_gathered: 'Requirements Gathered',
-  quotation_sent: 'Quotation Sent',
-  negotiation: 'Negotiation',
-  won: 'Won',
-  lost: 'Lost',
-}
+const stageLabels = STAGE_LABELS
 
 export default function LeadDetailPanel({ leadId, onClose }) {
-  const { data: lead, isLoading } = useLead(leadId)
+  const { data: lead, isLoading, isError, error } = useLead(leadId)
   const { data: activities } = useActivities(leadId)
   const { data: quotations } = useQuotations({ leadId })
   const { data: tasks } = useTasks({ leadId })
@@ -43,6 +28,20 @@ export default function LeadDetailPanel({ leadId, onClose }) {
   const [showQuoteModal, setShowQuoteModal] = useState(false)
   const [showTaskModal, setShowTaskModal] = useState(false)
 
+  if (isError) {
+    return (
+      <div className="fixed inset-y-0 right-0 z-40 w-full max-w-lg bg-white/90 backdrop-blur-sm shadow-xl border-l border-gray-200 p-6">
+        <div className="flex items-center justify-between border-b border-gray-200 pb-3">
+          <h3 className="text-lg font-bold text-red-600">Error</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">&times;</button>
+        </div>
+        <p className="mt-4 text-sm text-gray-600">
+          {error?.message || 'Could not load this lead. You may not have access, or it may have been deleted.'}
+        </p>
+      </div>
+    )
+  }
+
   if (isLoading || !lead) {
     return (
       <div className="fixed inset-y-0 right-0 z-40 w-full max-w-lg bg-white/90 backdrop-blur-sm shadow-xl border-l border-gray-200 p-6">
@@ -56,6 +55,33 @@ export default function LeadDetailPanel({ leadId, onClose }) {
   const handleStageChange = async (stage) => {
     try {
       await stageTransition.mutateAsync({ id: lead._id, stage })
+    } catch {}
+  }
+
+  const handleSave = async () => {
+    const safeData = Object.fromEntries(
+      LEAD_UPDATE_FIELDS.filter((f) => form[f] !== undefined).map((f) => [f, form[f]])
+    )
+    if (Object.keys(safeData).length === 0) {
+      setEditing(false)
+      return
+    }
+    try {
+      await updateLead.mutateAsync({ id: lead._id, data: safeData })
+      setEditing(false)
+    } catch {}
+  }
+
+  const handleAddActivity = async (e) => {
+    e.preventDefault()
+    if (!newActivity.message.trim()) return
+    try {
+      await createActivity.mutateAsync({
+        leadId: lead._id,
+        type: newActivity.type,
+        message: newActivity.message,
+      })
+      setNewActivity({ type: 'note', message: '' })
     } catch {}
   }
 

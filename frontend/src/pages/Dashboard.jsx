@@ -11,16 +11,7 @@ import PipelineChart from '@/components/application/charts/PipelineChart'
 import LeadSourcesChart from '@/components/application/charts/LeadSourcesChart'
 import RevenueTrendChart from '@/components/application/charts/RevenueTrendChart'
 import { BarChart } from '@/components/application/charts/bar-chart'
-
-const stageLabels = {
-  new: 'New',
-  contacted: 'Contacted',
-  requirement_gathered: 'Req. Gathered',
-  quotation_sent: 'Quotation',
-  negotiation: 'Negotiation',
-  won: 'Won',
-  lost: 'Lost',
-}
+import { STAGE_LABELS_SHORT as stageLabels, PIPELINE_STAGES } from '../constants/stages'
 
 export default function Dashboard() {
   const { data: currentUser } = useCurrentUser()
@@ -61,7 +52,7 @@ export default function Dashboard() {
 
   const pipelineData = useMemo(
     () =>
-      ['new', 'contacted', 'requirement_gathered', 'quotation_sent', 'negotiation', 'won']
+      PIPELINE_STAGES
         .map((stage) => ({
           stage: stageLabels[stage],
           leads: stageCounts[stage] || 0,
@@ -70,7 +61,6 @@ export default function Dashboard() {
   )
 
   /* ── lead sources donut data ── */
-  const sourceColors = ['#3b82f6', '#8b5cf6', '#14b8a6', '#f59e0b', '#ef4444', '#6366f1']
   const sourceData = useMemo(() => {
     const counts = {}
     for (const lead of leads || []) {

@@ -3,16 +3,7 @@ import { useLeads } from '../hooks/useLeads'
 import { useTasks } from '../hooks/useTasks'
 import { useQuotations } from '../hooks/useQuotations'
 import PipelineChart from '@/components/application/charts/PipelineChart'
-
-const stageLabels = {
-  new: 'New',
-  contacted: 'Contacted',
-  requirement_gathered: 'Req. Gathered',
-  quotation_sent: 'Quote Sent',
-  negotiation: 'Negotiation',
-  won: 'Won',
-  lost: 'Lost',
-}
+import { STAGE_LABELS_KANBAN as stageLabels, PIPELINE_STAGES } from '../constants/stages'
 
 export default function UserReportPanel({ user, onClose }) {
   const { data: leads } = useLeads()
@@ -41,7 +32,7 @@ export default function UserReportPanel({ user, onClose }) {
     stageCounts[lead.currentStage] = (stageCounts[lead.currentStage] || 0) + 1
   }
 
-  const pipelineData = ['new', 'contacted', 'requirement_gathered', 'quotation_sent', 'negotiation', 'won'].map(
+  const pipelineData = PIPELINE_STAGES.map(
     (stage) => ({
       stage: stageLabels[stage],
       leads: stageCounts[stage] || 0,

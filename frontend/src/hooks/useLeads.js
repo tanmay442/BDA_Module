@@ -8,7 +8,8 @@ export function useLeads(filters = {}) {
   return useQuery({
     queryKey: ['leads', filters],
     queryFn: () => api.get('/leads', { params }).then(r => r.data),
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
   })
 }
 

@@ -1,99 +1,105 @@
 const Task = require('./task.model');
 const AuditLog = require('../auditLogs/auditLog.model');
 const { broadcast } = require('../../services/pusher');
+const asyncHandler = require('../../utils/asyncHandler');
+const { isElevated, ensureCanRead, ensureCanModify, pick } = require('../../utils/permissions');
 
-exports.list = async (req, res, next) => {
-  try {
-    const { status, priority, leadId } = req.query;
-    const filter = {};
+const TASK_UPDATE_FIELDS = [
+  'title',
+  'description',
+  'leadId',
+  'assignedTo',
+  'dueDate',
+  'priority',
+  'status',
+];
 
-    if (status) filter.status = status;
-    if (priority) filter.priority = priority;
-    if (leadId) filter.leadId = leadId;
+exports.list = asyncHandler(async (req, res) => {
+  const { status, priority, leadId } = req.query;
+  const filter = {};
 
-    if (req.user.role === 'bda') {
-      filter.assignedTo = req.user._id;
-    }
+  if (status) filter.status = status;
+  if (priority) filter.priority = priority;
+  if (leadId) filter.leadId = leadId;
 
-    const tasks = await Task.find(filter)
-      .populate('assignedTo', 'name email')
-      .populate('leadId', 'companyName')
-      .sort('-createdAt');
-
-    res.json(tasks);
-  } catch (error) {
-    next(error);
+  if (req.user.role === 'bda') {
+    filter.assignedTo = req.user._id;
   }
-};
 
-exports.getById = async (req, res, next) => {
-  try {
-    const task = await Task.findById(req.params.id)
-      .populate('assignedTo', 'name email')
-      .populate('leadId', 'companyName');
+  const tasks = await Task.find(filter)
+    .populate('assignedTo', 'name email')
+    .populate('leadId', 'companyName')
+    .sort('-createdAt');
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
+  res.json(tasks);
+});
 
-    res.json(task);
-  } catch (error) {
-    next(error);
+exports.getById = asyncHandler(async (req, res) => {
+  const task = await Task.findById(req.params.id)
+    .populate('assignedTo', 'name email')
+    .populate('leadId', 'companyName');
+
+  ensureCanRead(req.user, task, 'Task');
+  res.json(task);
+});
+
+exports.create = asyncHandler(async (req, res) => {
+  const safeBody = pick(req.body || {}, [
+    'title',
+    'description',
+    'leadId',
+    'assignedTo',
+    'dueDate',
+    'priority',
+    'status',
+  ]);
+
+  const task = await Task.create({
+    ...safeBody,
+    createdBy: req.user._id,
+    assignedTo: safeBody.assignedTo || req.user._id,
+  });
+
+  await AuditLog.create({
+    userId: req.user._id,
+    action: 'task_created',
+    entityType: 'Task',
+    entityId: task._id,
+    newValue: { title: task.title, status: task.status },
+  });
+
+  broadcast('tasks', 'task:created', { id: task._id });
+  res.status(201).json(task);
+});
+
+exports.update = asyncHandler(async (req, res) => {
+  const existing = await Task.findById(req.params.id);
+  ensureCanModify(req.user, existing, 'Task');
+
+  const safeBody = pick(req.body || {}, TASK_UPDATE_FIELDS);
+  if (Object.keys(safeBody).length === 0) {
+    return res.status(400).json({ message: 'No valid fields to update' });
   }
-};
 
-exports.create = async (req, res, next) => {
-  try {
-    const task = await Task.create({
-      ...req.body,
-      createdBy: req.user._id,
-      assignedTo: req.body.assignedTo || req.user._id,
-    });
+  const task = await Task.findByIdAndUpdate(req.params.id, safeBody, {
+    returnDocument: 'after',
+    runValidators: true,
+  });
 
-    await AuditLog.create({
-      userId: req.user._id,
-      action: 'task_created',
-      entityType: 'Task',
-      entityId: task._id,
-      newValue: { title: task.title, status: task.status },
-    });
+  broadcast('tasks', 'task:updated', { id: task._id });
+  res.json(task);
+});
 
-    broadcast('tasks', 'task:created', { id: task._id });
-    res.status(201).json(task);
-  } catch (error) {
-    next(error);
+exports.remove = asyncHandler(async (req, res) => {
+  if (!isElevated(req.user)) {
+    return res.status(403).json({ message: 'Only admin/manager can delete tasks' });
   }
-};
 
-exports.update = async (req, res, next) => {
-  try {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
-      returnDocument: 'after',
-      runValidators: true,
-    });
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
-
-    broadcast('tasks', 'task:updated', { id: task._id });
-    res.json(task);
-  } catch (error) {
-    next(error);
+  const task = await Task.findByIdAndDelete(req.params.id);
+  if (!task) {
+    return res.status(404).json({ message: 'Task not found' });
   }
-};
 
-exports.remove = async (req, res, next) => {
-  try {
-    const task = await Task.findByIdAndDelete(req.params.id);
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
-
-    broadcast('tasks', 'task:deleted', { id: task._id });
-    res.json({ message: 'Task deleted' });
-  } catch (error) {
-    next(error);
-  }
-};
+  broadcast('tasks', 'task:deleted', { id: task._id });
+  res.json({ message: 'Task deleted' });
+});

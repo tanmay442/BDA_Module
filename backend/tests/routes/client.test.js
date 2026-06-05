@@ -44,13 +44,23 @@ describe('Client Routes', () => {
   });
 
   describe('POST /api/clients', () => {
-    it('should create a client', async () => {
+    it('should create a client as manager', async () => {
+      user.role = 'manager';
+      await user.save();
       const res = await request(app)
         .post('/api/clients')
         .send({ leadId, companyName: 'Test Client', accountManager: user._id });
 
       expect(res.status).toBe(201);
       expect(res.body.companyName).toBe('Test Client');
+    });
+
+    it('should forbid BDA from creating a client', async () => {
+      const res = await request(app)
+        .post('/api/clients')
+        .send({ leadId, companyName: 'Test Client', accountManager: user._id });
+
+      expect(res.status).toBe(403);
     });
   });
 

@@ -1,14 +1,9 @@
 import { Draggable } from '@hello-pangea/dnd'
+import { STAGE_ACCENTS } from '../constants/stages'
 
-const accentColors = {
-  new: 'border-l-gray-400',
-  contacted: 'border-l-blue-400',
-  requirement_gathered: 'border-l-yellow-400',
-  quotation_sent: 'border-l-purple-400',
-  negotiation: 'border-l-orange-400',
-  won: 'border-l-green-400',
-  lost: 'border-l-red-400',
-}
+const accentColors = Object.fromEntries(
+  Object.entries(STAGE_ACCENTS).map(([k, v]) => [k, `border-l-${v}-400`])
+)
 
 export default function LeadCard({ lead, index, onClick }) {
   return (

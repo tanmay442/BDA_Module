@@ -5,6 +5,7 @@ export function useReminders() {
   return useQuery({
     queryKey: ['reminders'],
     queryFn: () => api.get('/reminders').then(r => r.data),
-    refetchInterval: 60_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
   })
 }

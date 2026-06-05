@@ -27,8 +27,16 @@ const auditLogSchema = new mongoose.Schema(
     newValue: {
       type: mongoose.Schema.Types.Mixed,
     },
+    source: {
+      type: String,
+      trim: true,
+    },
   },
   { timestamps: true }
 );
+
+auditLogSchema.index({ entityId: 1, entityType: 1 });
+auditLogSchema.index({ userId: 1, createdAt: -1 });
+auditLogSchema.index({ entityType: 1, action: 1, createdAt: -1 });
 
 module.exports = mongoose.model('AuditLog', auditLogSchema);

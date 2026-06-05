@@ -53,6 +53,7 @@ app.use('/api/quotations', require('./modules/quotations/quotation.routes'));
 app.use('/api/activities', require('./modules/activities/activity.routes'));
 app.use('/api/clients', require('./modules/clients/client.routes'));
 app.use('/api/users', require('./modules/users/user.routes'));
+app.use('/api/demo', require('./modules/demo/demo.routes'));
 app.use('/api/reminders', require('./modules/reminders/reminder.routes'));
 
 app.use(errorHandler);

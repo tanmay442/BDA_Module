@@ -3,6 +3,7 @@ const request = require('supertest');
 const { connect, disconnect, clearDatabase } = require('../helpers');
 const app = require('../../src/app');
 const User = require('../../src/modules/users/user.model');
+const Lead = require('../../src/modules/leads/lead.model');
 const Quotation = require('../../src/modules/quotations/quotation.model');
 
 jest.mock('@clerk/express', () => ({
@@ -32,13 +33,19 @@ describe('Quotation Routes', () => {
     await disconnect();
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await clearDatabase();
     user = await User.create({
       clerkId: 'clerk_quote_route',
       name: 'Quote Router',
       email: 'quoteroute@example.com',
       role: 'bda',
+    });
+    await Lead.create({
+      _id: leadId,
+      companyName: 'Quote Test Co',
+      assignedTo: user._id,
+      createdBy: user._id,
     });
     getAuth.mockReturnValue({ userId: 'clerk_quote_route' });
   });

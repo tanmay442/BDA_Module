@@ -9,7 +9,8 @@ export function useTasks(filters = {}) {
   return useQuery({
     queryKey: ['tasks', filters],
     queryFn: () => api.get('/tasks', { params }).then((r) => r.data),
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
   })
 }
 

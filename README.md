@@ -172,10 +172,15 @@ BDA_Module/
 | Method | Path | Description |
 |--------|------|-------------|
 | GET | /api/users/me | Get current authenticated user |
-| PATCH | /api/users/me/onboard | Set name, role, company (first-time setup) |
+| PATCH | /api/users/me/onboard | Set name, role (bda/manager only), company (first-time setup) |
 | GET | /api/users | List users (filtered by role for BDA) |
 | GET | /api/users/:id | Get user by ID (admin/manager) |
 | PATCH | /api/users/:id/role | Update role (admin only) |
+
+### Demo
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /api/demo/switch-role | Switch the current user's role. **Only enabled when `ALLOW_DEMO_ROLE_SWITCH=true` on the backend** and the UI button is shown when `VITE_ALLOW_DEMO_SWITCH=true` on the frontend. |
 
 ### Reminders
 | Method | Path | Description |
@@ -213,6 +218,9 @@ userId, action, entityType, entityId, oldValue, newValue
 
 ### Role-Based Access
 Three roles: admin, manager, bda. BDAs see only their own leads/tasks/quotations. Managers see all team data. Admins additionally manage user roles. Authorization is enforced server-side via Clerk middleware guards.
+
+### Demo Mode (Role Switcher)
+For portfolio reviewers, the app exposes a safe way to switch between BDA and Manager views without breaking the regular security model. Enable it by setting both `ALLOW_DEMO_ROLE_SWITCH=true` (backend) and `VITE_ALLOW_DEMO_SWITCH=true` (frontend). A floating **"Demo: <current role>"** button appears in the bottom-right corner of the app; clicking it lets you swap to bda/manager/admin. The endpoint writes the new role to the authenticated user's record, and the React Query cache is invalidated so the UI updates immediately. **Leave both env vars unset in production.**
 
 ### Lead Pipeline (Kanban)
 Drag-and-drop board with seven stages (new through lost). Stage transitions auto-trigger side effects: quotation_sent upgrades draft quotes to sent, won creates a Client record. Leads can be filtered by search and stage.
@@ -256,6 +264,7 @@ PUSHER_APP_ID=<id>
 PUSHER_KEY=<key>
 PUSHER_SECRET=<secret>
 PUSHER_CLUSTER=<cluster>
+ALLOW_DEMO_ROLE_SWITCH=true   # set to false (or omit) in production
 ```
 
 ### Frontend (.env)
@@ -264,6 +273,7 @@ VITE_API_BASE_URL=http://localhost:5000/api
 VITE_CLERK_PUBLISHABLE_KEY=pk_test_...
 VITE_PUSHER_KEY=<key>
 VITE_PUSHER_CLUSTER=<cluster>
+VITE_ALLOW_DEMO_SWITCH=true   # set to false (or omit) in production
 ```
 
 ---

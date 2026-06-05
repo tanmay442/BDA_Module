@@ -8,7 +8,8 @@ export function useQuotations(filters = {}) {
   return useQuery({
     queryKey: ['quotations', filters],
     queryFn: () => api.get('/quotations', { params }).then((r) => r.data),
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
   })
 }
 

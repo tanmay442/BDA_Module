@@ -1,8 +1,9 @@
 import { useEffect } from 'react'
 import Pusher from 'pusher-js'
 import { useQueryClient } from '@tanstack/react-query'
+import { useUser } from '@clerk/clerk-react'
 
-const PUSHER_KEY = import.meta.env.VITE_PUSHER_KEY || '4d232f9808abc685ed65'
+const PUSHER_KEY = import.meta.env.VITE_PUSHER_KEY
 const PUSHER_CLUSTER = import.meta.env.VITE_PUSHER_CLUSTER || 'ap2'
 
 const channelEvents = [
@@ -14,8 +15,11 @@ const channelEvents = [
 
 export default function usePusher() {
   const qc = useQueryClient()
+  const { isSignedIn } = useUser()
 
   useEffect(() => {
+    if (!isSignedIn || !PUSHER_KEY) return
+
     const pusher = new Pusher(PUSHER_KEY, { cluster: PUSHER_CLUSTER })
 
     const subscriptions = channelEvents.map(({ channel, events, queryKey }) => {
@@ -30,5 +34,5 @@ export default function usePusher() {
       subscriptions.forEach((ch) => pusher.unsubscribe(ch.name))
       pusher.disconnect()
     }
-  }, [qc])
+  }, [qc, isSignedIn])
 }

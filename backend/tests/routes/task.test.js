@@ -121,13 +121,23 @@ describe('Task Routes', () => {
   });
 
   describe('DELETE /api/tasks/:id', () => {
-    it('should delete a task', async () => {
+    it('should delete a task as manager', async () => {
+      user.role = 'manager';
+      await user.save();
       const task = await Task.create({ title: 'Delete me', assignedTo: user._id });
 
       const res = await request(app).delete(`/api/tasks/${task._id}`);
 
       expect(res.status).toBe(200);
       expect(await Task.findById(task._id)).toBeNull();
+    });
+
+    it('should forbid BDA from deleting a task', async () => {
+      const task = await Task.create({ title: 'Do not delete', assignedTo: user._id });
+
+      const res = await request(app).delete(`/api/tasks/${task._id}`);
+
+      expect(res.status).toBe(403);
     });
   });
 });

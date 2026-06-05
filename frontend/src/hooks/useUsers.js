@@ -5,7 +5,8 @@ export function useCurrentUser() {
   return useQuery({
     queryKey: ['users', 'me'],
     queryFn: () => api.get('/users/me').then(r => r.data),
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
   })
 }
 
@@ -13,7 +14,8 @@ export function useUsers() {
   return useQuery({
     queryKey: ['users'],
     queryFn: () => api.get('/users').then(r => r.data),
-    refetchInterval: 30_000,
+    staleTime: 60_000,
+    refetchIntervalInBackground: false,
   })
 }
 
@@ -22,5 +24,16 @@ export function useUpdateRole() {
   return useMutation({
     mutationFn: ({ id, role }) => api.patch(`/users/${id}/role`, { role }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  })
+}
+
+export function useDemoSwitchRole() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ targetRole }) => api.post('/demo/switch-role', { targetRole }).then(r => r.data),
+    onSuccess: (user) => {
+      qc.setQueryData(['users', 'me'], user)
+      qc.invalidateQueries({ queryKey: ['users', 'me'] })
+    },
   })
 }

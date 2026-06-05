@@ -1,30 +1,15 @@
 import { Droppable } from '@hello-pangea/dnd'
 import LeadCard from './LeadCard'
+import { STAGE_LABELS_KANBAN as stageLabels, STAGE_ACCENTS } from '../constants/stages'
 
-const stageLabels = {
-  new: 'New',
-  contacted: 'Contacted',
-  requirement_gathered: 'Req. Gathered',
-  quotation_sent: 'Quote Sent',
-  negotiation: 'Negotiation',
-  won: 'Won',
-  lost: 'Lost',
-}
-
-const stageAccents = {
-  new: 'border-t-gray-400',
-  contacted: 'border-t-blue-400',
-  requirement_gathered: 'border-t-yellow-400',
-  quotation_sent: 'border-t-purple-400',
-  negotiation: 'border-t-orange-400',
-  won: 'border-t-green-400',
-  lost: 'border-t-red-400',
-}
+const stageBorderAccents = Object.fromEntries(
+  Object.entries(STAGE_ACCENTS).map(([k, v]) => [k, `border-t-${v}-400`])
+)
 
 export default function KanbanColumn({ stage, leads, onLeadClick }) {
   return (
     <div
-      className={`flex w-64 shrink-0 flex-col rounded-lg border border-gray-100 bg-white/40 backdrop-blur-sm border-t-4 ${stageAccents[stage]}`}
+      className={`flex w-64 shrink-0 flex-col rounded-lg border border-gray-100 bg-white/40 backdrop-blur-sm border-t-4 ${stageBorderAccents[stage]}`}
     >
       <div className="flex items-center justify-between px-3 py-2">
         <h3 className="text-sm font-semibold text-gray-700">

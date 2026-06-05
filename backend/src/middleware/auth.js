@@ -1,34 +1,38 @@
 const { clerkMiddleware, getAuth } = require('@clerk/express');
 const User = require('../modules/users/user.model');
+const asyncHandler = require('../utils/asyncHandler');
 
-const authenticate = async (req, res, next) => {
-  try {
-    const auth = getAuth(req);
+const authenticate = asyncHandler(async (req, res, next) => {
+  const auth = getAuth(req);
 
-    if (!auth?.userId) {
-      return res.status(401).json({ message: 'Unauthorized' });
-    }
+  if (!auth?.userId) {
+    return res.status(401).json({ message: 'Unauthorized' });
+  }
 
-    let user = await User.findOne({ clerkId: auth.userId });
+  const email =
+    auth.sessionClaims?.email ||
+    auth.sessionClaims?.email_address ||
+    auth.emailAddress ||
+    `${auth.userId}@clerk.local`;
+  const name = auth.sessionClaims?.name || auth.sessionClaims?.full_name || auth.fullName || email;
 
-    if (!user) {
-      const email = auth.sessionClaims?.email || auth.sessionClaims?.email_address || auth.emailAddress || `${auth.userId}@clerk.local`;
-      const name = auth.sessionClaims?.name || auth.sessionClaims?.full_name || auth.fullName || email;
-      user = await User.create({
+  const user = await User.findOneAndUpdate(
+    { clerkId: auth.userId },
+    {
+      $setOnInsert: {
         clerkId: auth.userId,
         email,
         name,
         role: 'bda',
-      });
-    }
+      },
+    },
+    { upsert: true, new: true, setDefaultsOnInsert: true, runValidators: true }
+  );
 
-    req.user = user;
-    req.auth = auth;
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
+  req.user = user;
+  req.auth = auth;
+  next();
+});
 
 const authorize = (...roles) => {
   return (req, res, next) => {

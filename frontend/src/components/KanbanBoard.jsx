@@ -1,16 +1,7 @@
 import { DragDropContext } from '@hello-pangea/dnd'
 import KanbanColumn from './KanbanColumn'
 import { useLeads, useStageTransition } from '../hooks/useLeads'
-
-const stages = [
-  'new',
-  'contacted',
-  'requirement_gathered',
-  'quotation_sent',
-  'negotiation',
-  'won',
-  'lost',
-]
+import { STAGES as stages } from '../constants/stages'
 
 function groupByStage(leads) {
   const groups = {}
