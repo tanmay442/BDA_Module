@@ -2,12 +2,14 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUser } from '@clerk/clerk-react'
 import { useCurrentUser } from '../hooks/useUsers'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
 import api from '../services/api'
 
 export default function OnboardingPage() {
   const { user } = useUser()
   const { refetch } = useCurrentUser()
   const navigate = useNavigate()
+  useDocumentTitle('Onboarding')
   const [form, setForm] = useState({
     name: user?.fullName || user?.emailAddresses?.[0]?.emailAddress || '',
     role: '',

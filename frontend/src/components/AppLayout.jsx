@@ -1,11 +1,22 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
+import { useDocumentTitle } from '../hooks/useDocumentTitle'
+
+const TITLES = {
+  '/': 'Dashboard',
+  '/leads': 'Leads',
+  '/tasks': 'Tasks',
+  '/quotations': 'Quotations',
+  '/users': 'Users',
+}
 
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [sidebarVisible, setSidebarVisible] = useState(true)
+  const location = useLocation()
+  useDocumentTitle(TITLES[location.pathname])
 
   return (
     <div className="flex h-screen bg-gray-50/70">
