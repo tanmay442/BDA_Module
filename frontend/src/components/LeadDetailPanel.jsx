@@ -3,6 +3,7 @@ import { useLead, useUpdateLead, useStageTransition } from '../hooks/useLeads'
 import { useActivities, useCreateActivity } from '../hooks/useActivities'
 import { useTasks, useCreateTask } from '../hooks/useTasks'
 import { useQuotations, downloadQuotationPdf } from '../hooks/useQuotations'
+import { formatCurrencyExact } from '../lib/format'
 import CreateQuotationModal from './CreateQuotationModal'
 import CreateTaskModal from './CreateTaskModal'
 import { STAGES, STAGE_LABELS, LEAD_UPDATE_FIELDS } from '../constants/stages'
@@ -171,7 +172,7 @@ export default function LeadDetailPanel({ leadId, onClose }) {
               <span className="text-gray-500">Phone</span>
               <span>{lead.phone || '—'}</span>
               <span className="text-gray-500">Value</span>
-              <span>${(lead.expectedDealValue || 0).toLocaleString()}</span>
+              <span>{formatCurrencyExact(lead.expectedDealValue)}</span>
               <span className="text-gray-500">Assigned To</span>
               <span>{lead.assignedTo?.name || 'Unassigned'}</span>
               <span className="text-gray-500">Created</span>
@@ -282,7 +283,7 @@ export default function LeadDetailPanel({ leadId, onClose }) {
                     <span className="text-sm font-medium text-gray-800">{q.quotationNumber}</span>
                     <span className="text-xs rounded-full bg-gray-100 px-2 py-0.5 capitalize">{q.status}</span>
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">${q.grandTotal?.toLocaleString()} &middot; v{q.version}</p>
+                  <p className="text-xs text-gray-500 mt-1">{formatCurrencyExact(q.grandTotal)} &middot; v{q.version}</p>
                   <button
                     onClick={() => downloadQuotationPdf(q._id, `${q.quotationNumber}.pdf`)}
                     className="mt-1 text-xs text-blue-600 hover:text-blue-700"

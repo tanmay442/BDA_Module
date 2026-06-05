@@ -1,4 +1,5 @@
 import PipelineChart from '@/components/application/charts/PipelineChart'
+import { formatCurrencyExact } from '../lib/format'
 import { STAGE_LABELS_KANBAN as stageLabels, PIPELINE_STAGES } from '../constants/stages'
 import { useUserReport } from '../hooks/useUsers'
 
@@ -106,7 +107,7 @@ export default function UserReportPanel({ user, onClose }) {
                   <p className="text-xs text-gray-500">{q.leadId?.companyName || 'No lead'}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium text-gray-900">${q.grandTotal?.toLocaleString()}</p>
+                  <p className="text-sm font-medium text-gray-900">{formatCurrencyExact(q.grandTotal)}</p>
                   <span className="text-xs capitalize text-gray-500">{q.status}</span>
                 </div>
               </div>
@@ -124,7 +125,7 @@ export default function UserReportPanel({ user, onClose }) {
                   <p className="text-sm font-medium text-gray-800">{l.companyName}</p>
                   <p className="text-xs text-gray-500">{l.contactPerson || '—'} &middot; {stageLabels[l.currentStage]}</p>
                 </div>
-                <span className="text-sm font-semibold text-gray-900">${(l.expectedDealValue || 0).toLocaleString()}</span>
+                <span className="text-sm font-semibold text-gray-900">{formatCurrencyExact(l.expectedDealValue)}</span>
               </div>
             ))}
           </div>

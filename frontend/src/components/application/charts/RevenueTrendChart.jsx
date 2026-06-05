@@ -1,4 +1,5 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { formatCurrencyExact } from '../../../lib/format';
 
 function formatYAxis(value) {
   if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(0)}M`;
@@ -22,7 +23,7 @@ export default function RevenueTrendChart({ data = [] }) {
             <XAxis dataKey="month" />
             <YAxis tickFormatter={formatYAxis} />
             <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+            <Tooltip formatter={(value) => formatCurrencyExact(value)} />
             <Area type="monotone" dataKey="actual" stroke="#10b981" fillOpacity={1} fill="url(#colorActual)" />
             <Area type="monotone" dataKey="expected" stroke="#9ca3af" fillOpacity={0} strokeDasharray="5 5" />
           </AreaChart>

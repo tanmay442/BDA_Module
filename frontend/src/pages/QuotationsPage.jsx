@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { formatCurrencyExact } from '../lib/format'
 import { useQuotations, useUpdateQuotation, useDeleteQuotation, downloadQuotationPdf } from '../hooks/useQuotations'
 import CreateQuotationModal from '../components/CreateQuotationModal'
 import EditQuotationModal from '../components/EditQuotationModal'
@@ -65,7 +66,7 @@ export default function QuotationsPage() {
                 >
                   <h4 className="text-sm font-medium text-gray-800">{q.quotationNumber}</h4>
                   <p className="text-xs text-gray-500">
-                    {q.leadId?.companyName || 'No lead'} &middot; ${q.grandTotal.toLocaleString()}
+                    {q.leadId?.companyName || 'No lead'} &middot; {formatCurrencyExact(q.grandTotal)}
                   </p>
                   {q.items && (
                     <p className="text-xs text-gray-400">{q.items.length} item(s) &middot; v{q.version} &middot; {q.createdBy?.name}</p>

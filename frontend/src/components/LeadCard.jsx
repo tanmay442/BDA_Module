@@ -1,4 +1,5 @@
 import { Draggable } from '@hello-pangea/dnd'
+import { formatCurrencyExact } from '../lib/format'
 import { STAGE_ACCENTS } from '../constants/stages'
 
 const accentColors = Object.fromEntries(
@@ -24,7 +25,7 @@ export default function LeadCard({ lead, index, onClick }) {
               <p className="mt-1 text-sm text-gray-500">{lead.contactPerson}</p>
             )}
             <div className="mt-2 flex items-center justify-between text-xs text-gray-400">
-              <span>${(lead.expectedDealValue || 0).toLocaleString()}</span>
+              <span>{formatCurrencyExact(lead.expectedDealValue)}</span>
               {lead.assignedTo && (
                 <span className="max-w-[100px] truncate">
                   {lead.assignedTo?.name || 'Unassigned'}

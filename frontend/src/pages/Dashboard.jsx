@@ -3,6 +3,7 @@ import { isToday } from 'date-fns'
 import { useTasks, useUpdateTask } from '../hooks/useTasks'
 import { useCurrentUser } from '../hooks/useUsers'
 import { useDashboardSummary } from '../hooks/useDashboardSummary'
+import { formatCurrency, formatCurrencyExact, formatNumber } from '../lib/format'
 import { DollarSign, Target, Activity, FileText, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react'
 import PipelineChart from '@/components/application/charts/PipelineChart'
 import LeadSourcesChart from '@/components/application/charts/LeadSourcesChart'
@@ -71,8 +72,8 @@ export default function Dashboard() {
       <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {isManager ? (
           <>
-            <KPICard icon={DollarSign} label="Total Pipeline Value" value={fmtCurrency(totalValue)} />
-            <KPICard icon={CheckCircle} label="Revenue Won (MTD)" value={fmtCurrency(monthlyAchieved)} />
+            <KPICard icon={DollarSign} label="Total Pipeline Value" value={formatCurrency(totalValue)} />
+            <KPICard icon={CheckCircle} label="Revenue Won (MTD)" value={formatCurrency(monthlyAchieved)} />
             <KPICard icon={Target} label="Win / Loss Ratio" value={`${totals.winLossRatio || 0}%`} />
             <KPICard icon={FileText} label="Pending Approvals" value={pendingApprovals} />
           </>
@@ -83,8 +84,8 @@ export default function Dashboard() {
                 <p className="text-[10px] font-medium uppercase tracking-wide text-gray-500">My Monthly Target</p>
                 <Target className="size-4 text-gray-400" />
               </div>
-              <p className="mt-1 text-2xl font-bold text-gray-900">{fmtCurrency(monthlyAchieved)}</p>
-              <p className="text-xs text-gray-500">of {fmtCurrency(monthlyTarget)}</p>
+              <p className="mt-1 text-2xl font-bold text-gray-900">{formatCurrency(monthlyAchieved)}</p>
+              <p className="text-xs text-gray-500">of {formatCurrency(monthlyTarget)}</p>
               <div className="mt-2 h-1.5 rounded-full bg-gray-100">
                 <div
                   className="h-1.5 rounded-full bg-blue-500 transition-all"
@@ -142,7 +143,7 @@ export default function Dashboard() {
                       <p className="text-xs text-gray-500">Won by {lead.assignedTo?.name || 'Unassigned'}</p>
                     </div>
                     <span className="text-sm font-semibold text-green-600">
-                      ${(lead.expectedDealValue || 0).toLocaleString()}
+                      {formatCurrencyExact(lead.expectedDealValue)}
                     </span>
                   </div>
                 ))}
@@ -191,7 +192,7 @@ export default function Dashboard() {
                       </p>
                     </div>
                     <span className="text-sm font-semibold text-orange-500">
-                      ${(lead.expectedDealValue || 0).toLocaleString()}
+                      {formatCurrencyExact(lead.expectedDealValue)}
                     </span>
                   </div>
                 ))}
@@ -207,9 +208,9 @@ export default function Dashboard() {
                     <p className="text-sm font-medium text-gray-800">{lead.companyName}</p>
                     <p className="text-xs text-gray-500">{lead.contactPerson || '—'} · Negotiation</p>
                   </div>
-                  <span className="text-sm font-semibold text-gray-900">
-                    ${(lead.expectedDealValue || 0).toLocaleString()}
-                  </span>
+                    <span className="text-sm font-semibold text-gray-900">
+                      {formatCurrencyExact(lead.expectedDealValue)}
+                    </span>
                 </div>
               ))}
             </div>
@@ -220,12 +221,6 @@ export default function Dashboard() {
       </div>
     </div>
   )
-}
-
-function fmtCurrency(n) {
-  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`
-  if (n >= 1_000) return `$${(n / 1_000).toFixed(0)}k`
-  return `$${Math.round(n).toLocaleString()}`
 }
 
 function KPICard({ icon: Icon, label, value, urgent }) {
