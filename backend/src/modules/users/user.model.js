@@ -36,4 +36,19 @@ const userSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
+userSchema.set('toJSON', {
+  transform: (_doc, ret) => {
+    delete ret.clerkId;
+    delete ret.__v;
+    return ret;
+  },
+});
+userSchema.set('toObject', {
+  transform: (_doc, ret) => {
+    delete ret.clerkId;
+    delete ret.__v;
+    return ret;
+  },
+});
+
 module.exports = mongoose.model('User', userSchema);

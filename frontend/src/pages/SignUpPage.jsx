@@ -1,9 +1,5 @@
-import { SignUp } from '@clerk/clerk-react'
+import { Navigate } from 'react-router-dom'
 
 export default function SignUpPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-gray-50/70">
-      <SignUp path="/sign-up" routing="path" signInUrl="/sign-in" />
-    </div>
-  )
+  return <Navigate to="/sign-in" replace />
 }

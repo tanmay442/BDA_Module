@@ -1,0 +1,25 @@
+export function Logo({ className = "h-6 w-6" }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 32 32"
+      fill="none"
+      className={className}
+      aria-label="SalesOps logo"
+    >
+      <rect x="2" y="2" width="28" height="28" rx="7" fill="#111827" />
+      <path
+        d="M7 24V15L13 12V15L19 12V15L25 12V24H7Z"
+        fill="white"
+        fillOpacity="0.95"
+      />
+      <rect x="22" y="7" width="2" height="5" fill="white" fillOpacity="0.95" />
+      <rect x="9" y="18" width="2" height="2" fill="#111827" />
+      <rect x="15" y="18" width="2" height="2" fill="#111827" />
+      <rect x="21" y="18" width="2" height="2" fill="#111827" />
+      <rect x="9" y="21" width="2" height="2" fill="#111827" />
+      <rect x="15" y="21" width="2" height="2" fill="#111827" />
+      <rect x="21" y="21" width="2" height="2" fill="#111827" />
+    </svg>
+  )
+}

@@ -1,6 +1,6 @@
 import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import { ClerkProvider, SignedIn, SignedOut, RedirectToSignIn, useAuth } from '@clerk/clerk-react'
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
+import { ClerkProvider, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setTokenProvider } from './services/api'
 import usePusher from './hooks/usePusher'
@@ -27,13 +27,14 @@ function ClerkTokenProvider({ children }) {
 }
 
 function ProtectedRoute() {
+  const location = useLocation()
   return (
     <>
       <SignedIn>
         <OnboardingGate />
       </SignedIn>
       <SignedOut>
-        <RedirectToSignIn />
+        <Navigate to="/sign-in" replace state={{ from: location }} />
       </SignedOut>
     </>
   )
@@ -79,7 +80,7 @@ function AppContent() {
             <Route path="/quotations" element={<QuotationsPage />} />
             <Route path="/users" element={<UsersPage />} />
           </Route>
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="*" element={<Navigate to="/sign-in" replace />} />
         </Routes>
       </BrowserRouter>
     </div>

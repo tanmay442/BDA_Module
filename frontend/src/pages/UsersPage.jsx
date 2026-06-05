@@ -36,7 +36,7 @@ export default function UsersPage() {
             <thead>
               <tr className="border-b border-gray-200 bg-gray-50 text-xs font-medium uppercase text-gray-500">
                 <th className="px-4 py-3">Name</th>
-                <th className="px-4 py-3">Email</th>
+                <th className="px-4 py-3">User ID</th>
                 <th className="px-4 py-3">Role</th>
                 <th className="px-4 py-3">Department</th>
                 <th className="px-4 py-3">Joined</th>
@@ -55,7 +55,9 @@ export default function UsersPage() {
                       <span className="ml-2 text-xs text-gray-400">(you)</span>
                     )}
                   </td>
-                  <td className="px-4 py-3 text-gray-600">{user.email}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-gray-500">
+                    {user._id?.slice(-8) || '—'}
+                  </td>
                   <td className="px-4 py-3">
                     {currentUser?.role === 'admin' && currentUser._id !== user._id ? (
                       <select

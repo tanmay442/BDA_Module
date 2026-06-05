@@ -1,5 +1,7 @@
 const User = require('./user.model');
 
+const SAFE = '-clerkId -__v';
+
 exports.list = async (req, res, next) => {
   try {
     let filter = {};
@@ -11,7 +13,7 @@ exports.list = async (req, res, next) => {
         ],
       };
     }
-    const users = await User.find(filter).select('-__v').sort('name');
+    const users = await User.find(filter).select(SAFE).sort('name');
     res.json(users);
   } catch (error) {
     next(error);
@@ -20,7 +22,7 @@ exports.list = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const user = await User.findById(req.params.id).select('-__v');
+    const user = await User.findById(req.params.id).select(SAFE);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -34,7 +36,7 @@ exports.getById = async (req, res, next) => {
 
 exports.me = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select('-__v');
+    const user = await User.findById(req.user._id).select(SAFE);
     if (!user) return res.status(404).json({ message: 'User not found' });
     res.json(user);
   } catch (error) {
@@ -55,7 +57,7 @@ exports.onboard = async (req, res, next) => {
     const user = await User.findByIdAndUpdate(req.user._id, updates, {
       returnDocument: 'after',
       runValidators: true,
-    });
+    }).select(SAFE);
     res.json(user);
   } catch (error) {
     next(error);
@@ -74,7 +76,7 @@ exports.updateRole = async (req, res, next) => {
       req.params.id,
       { role },
       { returnDocument: 'after', runValidators: true }
-    );
+    ).select(SAFE);
 
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
