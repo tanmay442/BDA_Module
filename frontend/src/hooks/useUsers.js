@@ -33,7 +33,13 @@ export function useDemoSwitchRole() {
     mutationFn: ({ targetRole }) => api.post('/demo/switch-role', { targetRole }).then(r => r.data),
     onSuccess: (user) => {
       qc.setQueryData(['users', 'me'], user)
-      qc.invalidateQueries({ queryKey: ['users', 'me'] })
+      qc.invalidateQueries({ queryKey: ['users'] })
+      qc.invalidateQueries({ queryKey: ['leads'] })
+      qc.invalidateQueries({ queryKey: ['tasks'] })
+      qc.invalidateQueries({ queryKey: ['quotations'] })
+      qc.invalidateQueries({ queryKey: ['activities'] })
+      qc.invalidateQueries({ queryKey: ['clients'] })
+      qc.invalidateQueries({ queryKey: ['dashboard'] })
     },
   })
 }
