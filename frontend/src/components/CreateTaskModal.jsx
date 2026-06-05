@@ -30,7 +30,8 @@ export default function CreateTaskModal({ open, onClose, leadId }) {
       })
       setForm({ title: '', description: '', priority: 'medium', dueDate: '', assignedTo: '' })
       onClose()
-    } catch {
+    } catch (err) {
+      console.error('Failed to create task', err)
     }
   }
 

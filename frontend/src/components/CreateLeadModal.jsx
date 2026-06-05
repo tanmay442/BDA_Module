@@ -21,7 +21,8 @@ export default function CreateLeadModal({ open, onClose }) {
       })
       setForm({ companyName: '', contactPerson: '', email: '', phone: '', expectedDealValue: '', notes: '' })
       onClose()
-    } catch {
+    } catch (err) {
+      console.error('Failed to create lead', err)
     }
   }
 

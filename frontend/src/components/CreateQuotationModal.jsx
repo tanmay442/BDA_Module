@@ -53,7 +53,8 @@ export default function CreateQuotationModal({ open, onClose, leadId: preselecte
       })
       setForm({ leadId: '', items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }], tax: 0 })
       onClose()
-    } catch {
+    } catch (err) {
+      console.error('Failed to create quotation', err)
     }
   }
 

@@ -2,7 +2,9 @@ import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { ClerkProvider, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { setTokenProvider } from './services/api'
+import { Toaster } from 'sonner'
+import { setTokenProvider, setErrorReporter } from './services/api'
+import { notifyError } from './lib/toast'
 import usePusher from './hooks/usePusher'
 import AppLayout from './components/AppLayout'
 import DemoRoleSwitcher from './components/DemoRoleSwitcher'
@@ -24,7 +26,10 @@ const queryClient = new QueryClient()
 
 function ClerkTokenProvider({ children }) {
   const { getToken } = useAuth()
-  React.useEffect(() => { setTokenProvider(getToken) }, [getToken])
+  React.useEffect(() => {
+    setTokenProvider(getToken)
+    setErrorReporter(notifyError)
+  }, [getToken])
   usePusher()
   return children
 }
@@ -86,6 +91,7 @@ function AppContent() {
           <Route path="*" element={<Navigate to="/sign-in" replace />} />
         </Routes>
         <DemoRoleSwitcher />
+        <Toaster position="top-right" richColors closeButton />
       </BrowserRouter>
     </div>
   )

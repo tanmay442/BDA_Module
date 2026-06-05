@@ -53,9 +53,7 @@ export default function LeadDetailPanel({ leadId, onClose }) {
   const currentIdx = stages.indexOf(lead.currentStage)
 
   const handleStageChange = async (stage) => {
-    try {
-      await stageTransition.mutateAsync({ id: lead._id, stage })
-    } catch {}
+    await stageTransition.mutateAsync({ id: lead._id, stage })
   }
 
   const handleSave = async () => {
@@ -69,7 +67,10 @@ export default function LeadDetailPanel({ leadId, onClose }) {
     try {
       await updateLead.mutateAsync({ id: lead._id, data: safeData })
       setEditing(false)
-    } catch {}
+    } catch (err) {
+      // Interceptor already shows toast; keep edit mode open so user can retry
+      console.error('Failed to save lead', err)
+    }
   }
 
   const handleAddActivity = async (e) => {
@@ -82,7 +83,9 @@ export default function LeadDetailPanel({ leadId, onClose }) {
         message: newActivity.message,
       })
       setNewActivity({ type: 'note', message: '' })
-    } catch {}
+    } catch (err) {
+      console.error('Failed to add activity', err)
+    }
   }
 
   return (

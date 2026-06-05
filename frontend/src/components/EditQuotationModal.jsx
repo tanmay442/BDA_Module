@@ -50,7 +50,8 @@ export default function EditQuotationModal({ open, onClose, quotation }) {
         },
       })
       onClose()
-    } catch {
+    } catch (err) {
+      console.error('Failed to update quotation', err)
     }
   }
 

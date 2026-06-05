@@ -30,8 +30,8 @@ export default function OnboardingPage() {
       await api.patch('/users/me/onboard', form)
       await refetch()
       navigate('/', { replace: true })
-    } catch {
-      setError('Something went wrong. Please try again.')
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Something went wrong. Please try again.')
     } finally {
       setSaving(false)
     }
