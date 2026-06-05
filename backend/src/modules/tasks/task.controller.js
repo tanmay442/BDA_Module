@@ -3,6 +3,7 @@ const AuditLog = require('../auditLogs/auditLog.model');
 const { broadcast } = require('../../services/pusher');
 const asyncHandler = require('../../utils/asyncHandler');
 const { isElevated, ensureCanRead, ensureCanModify, pick } = require('../../utils/permissions');
+const { parsePagination, buildResponse, wantsPagination } = require('../../utils/pagination');
 
 const TASK_UPDATE_FIELDS = [
   'title',
@@ -17,6 +18,8 @@ const TASK_UPDATE_FIELDS = [
 exports.list = asyncHandler(async (req, res) => {
   const { status, priority, leadId } = req.query;
   const filter = {};
+  const paginated = wantsPagination(req.query);
+  const { page, limit, skip } = parsePagination(req.query);
 
   if (status) filter.status = status;
   if (priority) filter.priority = priority;
@@ -26,12 +29,20 @@ exports.list = asyncHandler(async (req, res) => {
     filter.assignedTo = req.user._id;
   }
 
-  const tasks = await Task.find(filter)
+  const query = Task.find(filter)
     .populate('assignedTo', 'name email')
     .populate('leadId', 'companyName')
     .sort('-createdAt');
 
-  res.json(tasks);
+  if (paginated) {
+    const [data, total] = await Promise.all([
+      query.skip(skip).limit(limit).lean(),
+      Task.countDocuments(filter),
+    ]);
+    return res.json(buildResponse(data, total, page, limit));
+  }
+
+  res.json(await query);
 });
 
 exports.getById = asyncHandler(async (req, res) => {

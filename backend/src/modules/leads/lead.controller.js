@@ -5,6 +5,7 @@ const Client = require('../clients/client.model');
 const { broadcast } = require('../../services/pusher');
 const asyncHandler = require('../../utils/asyncHandler');
 const { isElevated, ensureCanRead, ensureCanModify, pick } = require('../../utils/permissions');
+const { parsePagination, buildResponse, wantsPagination } = require('../../utils/pagination');
 const { STAGES } = require('../../constants/stages');
 
 const LEAD_UPDATE_FIELDS = [
@@ -22,6 +23,8 @@ const LEAD_UPDATE_FIELDS = [
 exports.list = asyncHandler(async (req, res) => {
   const { stage, assignedTo, search } = req.query;
   const filter = {};
+  const paginated = wantsPagination(req.query);
+  const { page, limit, skip } = parsePagination(req.query);
 
   if (stage) filter.currentStage = stage;
   if (assignedTo) filter.assignedTo = assignedTo;
@@ -42,12 +45,21 @@ exports.list = asyncHandler(async (req, res) => {
     filter.assignedTo = req.user._id;
   }
 
-  const leads = await Lead.find(filter)
+  const query = Lead.find(filter)
     .populate('assignedTo', 'name email')
     .populate('createdBy', 'name email')
     .sort(search ? { score: { $meta: 'textScore' } } : '-createdAt');
 
-  res.json(leads);
+  if (paginated) {
+    const [data, total] = await Promise.all([
+      query.skip(skip).limit(limit).lean(),
+      Lead.countDocuments(filter),
+    ]);
+    return res.json(buildResponse(data, total, page, limit));
+  }
+
+  const data = await query;
+  res.json(data);
 });
 
 exports.getById = asyncHandler(async (req, res) => {

@@ -3,6 +3,7 @@ const Lead = require('../leads/lead.model');
 const Task = require('../tasks/task.model');
 const Quotation = require('../quotations/quotation.model');
 const asyncHandler = require('../../utils/asyncHandler');
+const { parsePagination, buildResponse, wantsPagination } = require('../../utils/pagination');
 
 const SAFE = '-clerkId -__v';
 const REPORT_RECENT_LIMIT = 10;
@@ -20,8 +21,19 @@ exports.list = asyncHandler(async (req, res) => {
       ],
     };
   }
-  const users = await User.find(filter).select(SAFE).sort('name');
-  res.json(users);
+  const paginated = wantsPagination(req.query);
+  const { page, limit, skip } = parsePagination(req.query);
+  const query = User.find(filter).select(SAFE).sort('name');
+
+  if (paginated) {
+    const [data, total] = await Promise.all([
+      query.skip(skip).limit(limit).lean(),
+      User.countDocuments(filter),
+    ]);
+    return res.json(buildResponse(data, total, page, limit));
+  }
+
+  res.json(await query);
 });
 
 exports.getById = asyncHandler(async (req, res) => {

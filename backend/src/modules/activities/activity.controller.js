@@ -1,18 +1,29 @@
 const Activity = require('./activity.model');
 const { broadcast } = require('../../services/pusher');
 const asyncHandler = require('../../utils/asyncHandler');
+const { parsePagination, buildResponse, wantsPagination } = require('../../utils/pagination');
 
 exports.list = asyncHandler(async (req, res) => {
   const { leadId } = req.query;
   const filter = {};
+  const paginated = wantsPagination(req.query);
+  const { page, limit, skip } = parsePagination(req.query);
 
   if (leadId) filter.leadId = leadId;
 
-  const activities = await Activity.find(filter)
+  const query = Activity.find(filter)
     .populate('userId', 'name email')
     .sort('-createdAt');
 
-  res.json(activities);
+  if (paginated) {
+    const [data, total] = await Promise.all([
+      query.skip(skip).limit(limit).lean(),
+      Activity.countDocuments(filter),
+    ]);
+    return res.json(buildResponse(data, total, page, limit));
+  }
+
+  res.json(await query);
 });
 
 exports.create = asyncHandler(async (req, res) => {

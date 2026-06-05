@@ -6,6 +6,7 @@ const Counter = require('../counters/counter.model');
 const { broadcast } = require('../../services/pusher');
 const asyncHandler = require('../../utils/asyncHandler');
 const { isElevated, ownsResource, ensureCanRead, pick } = require('../../utils/permissions');
+const { parsePagination, buildResponse, wantsPagination } = require('../../utils/pagination');
 
 const QUOTATION_UPDATE_FIELDS = [
   'leadId',
@@ -75,6 +76,8 @@ const applyQuotationLeadStageEffects = async ({ lead, stage, actorId, isFirstTra
 exports.list = asyncHandler(async (req, res) => {
   const { leadId, status } = req.query;
   const filter = {};
+  const paginated = wantsPagination(req.query);
+  const { page, limit, skip } = parsePagination(req.query);
 
   if (leadId) filter.leadId = leadId;
   if (status) filter.status = status;
@@ -82,12 +85,20 @@ exports.list = asyncHandler(async (req, res) => {
     filter.createdBy = req.user._id;
   }
 
-  const quotations = await Quotation.find(filter)
+  const query = Quotation.find(filter)
     .populate('leadId', 'companyName contactPerson')
     .populate('createdBy', 'name email')
     .sort('-createdAt');
 
-  res.json(quotations);
+  if (paginated) {
+    const [data, total] = await Promise.all([
+      query.skip(skip).limit(limit).lean(),
+      Quotation.countDocuments(filter),
+    ]);
+    return res.json(buildResponse(data, total, page, limit));
+  }
+
+  res.json(await query);
 });
 
 exports.getById = asyncHandler(async (req, res) => {
