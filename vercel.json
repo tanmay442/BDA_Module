@@ -1,5 +1,4 @@
 {
-  "$comment": "Vercel does not support a monorepo with experimentalServices. The frontend (Vite) and backend (Express) should be deployed as two separate Vercel projects pointing at frontend/ and backend/ respectively, or both run on a single Node host (Render, Railway, Fly.io). If you must deploy on Vercel, the backend should be exposed as a Vercel Function from backend/src/app.js (see backend/api/index.js for the serverless wrapper).",
   "version": 2,
   "builds": [
     {
@@ -9,6 +8,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/(.*)", "destination": "/frontend/$1" }
+    { "source": "", "destination": "" }
   ]
 }
