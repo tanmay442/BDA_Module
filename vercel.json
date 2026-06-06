@@ -1,15 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "frontend/dist",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "/api"
+  "experimentalServices": {
+    "web": {
+      "entrypoint": "frontend",
+      "routePrefix": "/"
     },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+    "api": {
+      "entrypoint": "api/index.js",
+      "routePrefix": "/api"
     }
-  ]
+  }
 }
