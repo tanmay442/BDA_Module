@@ -182,12 +182,22 @@ BDA_Module/
 |--------|------|-------------|
 | GET | /api/reminders | Overdue / due today / upcoming tasks |
 
+### Webhooks (Clerk)
+| Method | Path | Description |
+|--------|------|-------------|
+| POST | /api/webhooks/clerk | Svix-verified Clerk user lifecycle (user.created, user.updated, user.deleted). Role is never read from the payload. |
+
+### Health
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | /api/health | Liveness probe (no auth) |
+
 ---
 
 ## Database Collections
 
 ### User
-clerkId, name, email, role (admin/manager/bda), department, company
+clerkId, name, email, imageUrl, role (admin/manager/bda), department, company
 
 ### Lead
 companyName, contactPerson, email, phone, industry, source, currentStage (new/contacted/requirement_gathered/quotation_sent/negotiation/won/lost), expectedDealValue, assignedTo, createdBy, notes
@@ -241,21 +251,46 @@ Grainient component renders a real-time animated gradient using WebGL2 via the o
 ### Reminders
 The reminders endpoint aggregates tasks into three groups: overdue, due today, and upcoming (next 3 days). The bell icon in the topbar shows a badge count and opens a dropdown with color-coded left-border accent items (red for overdue, yellow for due today, blue for upcoming).
 
+### Clerk Webhook (Identity Sync)
+`POST /api/webhooks/clerk` keeps the local `User` collection in sync with Clerk. The route is mounted BEFORE `express.json()` and verifies the Svix signature (`svix-id`, `svix-timestamp`, `svix-signature`) on the raw body; bad signatures return 401, stale timestamps return 410. Handled events: `user.created` / `user.updated` (idempotent upsert by `clerkId`, default role `bda` on create), `user.deleted` (hard delete), unknown events ack with 200 to stop Svix retries. **Role is never read from the Clerk payload** - role changes go exclusively through `PATCH /api/users/:id/role` (admin only) so that Clerk's client-writable `publicMetadata` cannot be used for self-promotion.
+
+### Admin Bootstrap
+Set `BOOTSTRAP_ADMIN_EMAILS=you@gmail.com` in the backend env. On every server cold start, `ensureBootstrapAdmins()` scans for that email and, **if and only if the database currently has zero admin rows**, promotes the matching user to `admin` and writes an `AuditLog` entry with `action: 'system.bootstrap_admin'`. The same promotion runs on every authenticated request and on every webhook delivery, so a user who signs in before the webhook arrives is still promoted. After the first admin exists, the bootstrap is permanently a no-op - new emails added to the env var are ignored. This is how you recover admin access after a DB wipe without manual Mongo surgery.
+
+### Rate Limiting
+`express-rate-limit` is mounted at three levels, all per-IP and env-overridable: `webhookLimiter` (100 / 5 min) on `/api/webhooks/*`, `generalLimiter` (300 / 5 min) on every authenticated route, and `sensitiveLimiter` (20 / 5 min) on `PATCH /api/users/:id/role` only. 429 responses use standard `RateLimit-*` headers.
+
+### CORS
+`backend/src/config/cors.js` reads `CORS_ALLOWED_ORIGINS` and rejects unknown origins with a warning log. In production on Vercel, the frontend and API share an origin so CORS is a no-op; the allowlist is consulted in development only. The Clerk webhook route is server-to-server and is intentionally mounted before CORS so Svix deliveries aren't subject to browser-origin checks.
+
+### Auth Boundary (Clerk + Custom)
+Two layers, deliberately scoped: Clerk's `clerkMiddleware` (from `@clerk/express`) attaches session info to the request; the custom `authenticate` middleware then upserts the local `User` row keyed by `clerkId` (using `findOneAndUpdate` with `$setOnInsert: { role: 'bda' }` so it's race-safe against the webhook handler and never overwrites an existing role). The frontend sends the Clerk JWT via an axios interceptor (`Bearer <token>`) so the API gets auth on every request without depending on browser cookies. CORS is the only place these layers interact.
+
 ---
 
 ## Environment Variables
 
 ### Backend (.env)
+A complete template lives at the repo root in `.env.example`. Required keys:
+
 ```
 PORT=5000
 NODE_ENV=development
 MONGO_URI=mongodb+srv://<user>:<pass>@cluster/<db>
 CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
+CLERK_WEBHOOK_SECRET=whsec_...   # from Clerk dashboard -> Webhooks -> Signing Secret
+BOOTSTRAP_ADMIN_EMAILS=you@gmail.com  # comma-separated; first admin gets auto-promoted
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173  # dev only; same-origin in prod
 PUSHER_APP_ID=<id>
 PUSHER_KEY=<key>
 PUSHER_SECRET=<secret>
 PUSHER_CLUSTER=<cluster>
+# Optional rate-limit overrides (defaults shown):
+# RATE_LIMIT_WINDOW_MS=300000
+# RATE_LIMIT_GENERAL_MAX=300
+# RATE_LIMIT_WEBHOOK_MAX=100
+# RATE_LIMIT_SENSITIVE_MAX=20
 ```
 
 ### Frontend (.env)
@@ -274,16 +309,29 @@ VITE_PUSHER_CLUSTER=<cluster>
 # Backend
 cd backend
 npm install
-cp .env.example .env  # fill in your values
+cp ../.env.example ../.env  # env file lives at repo root; fill in your values
 npm run dev
 
 # Frontend
 cd frontend
 npm install
-cp .env.example .env  # fill in your values
+# frontend has no .env.example yet; create frontend/.env with the four VITE_* keys shown above
 npm run dev
 
 # Seed demo data (optional)
 cd backend
 node scripts/seed.js
 ```
+
+
+### One-time post-deploy setup
+
+1. **Configure the Clerk webhook** in the Clerk dashboard:
+   Webhooks -> Add endpoint -> URL `https://<your-vercel-domain>/api/webhooks/clerk`
+   -> subscribe to `user.created`, `user.updated`, `user.deleted` -> copy the
+   Signing Secret into the `CLERK_WEBHOOK_SECRET` Vercel env var.
+2. **Set `BOOTSTRAP_ADMIN_EMAILS`** in Vercel env to your real email (comma-separated
+   if multiple). Sign in once to claim admin; the variable is then ignored for
+   everyone else.
+3. **Configure CORS** via `CORS_ALLOWED_ORIGINS` if you ever serve the API from a
+   different origin than the dashboard. Same-origin on Vercel is the default.
