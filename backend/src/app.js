@@ -91,11 +91,15 @@ async function runBootstrap() {
   return bootstrapPromise;
 }
 
-// Fire-and-forget on every cold start; promise is cached so we don't
-// run it again for the lifetime of the warm function instance.
-if (process.env.NODE_ENV !== 'test') {
+// On the local dev server, fire the bootstrap right after module load.
+// On serverless (Vercel), the entrypoint (api/index.js) calls
+// app.initialize() AFTER connecting to MongoDB so the bootstrap
+// query has a live connection.
+if (process.env.NODE_ENV !== 'test' && require.main === module) {
   runBootstrap();
 }
+
+app.initialize = runBootstrap;
 
 // ============================================================================
 // 8. LOCAL DEV SERVER BOOT
