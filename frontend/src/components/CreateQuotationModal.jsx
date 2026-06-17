@@ -14,6 +14,7 @@ export default function CreateQuotationModal({ open, onClose, leadId: preselecte
 
   useEffect(() => {
     if (open) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset form when modal opens
       setForm((prev) => ({
         ...prev,
         leadId: preselectedLeadId || prev.leadId,

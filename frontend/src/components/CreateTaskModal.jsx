@@ -16,6 +16,7 @@ export default function CreateTaskModal({ open, onClose, leadId }) {
 
   useEffect(() => {
     if (open && leadId) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync form to prop on open
       setForm((prev) => ({ ...prev, leadId }))
     }
   }, [open, leadId])

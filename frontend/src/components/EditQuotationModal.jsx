@@ -8,6 +8,7 @@ export default function EditQuotationModal({ open, onClose, quotation }) {
 
   useEffect(() => {
     if (quotation) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- initialize form from prop
       setForm({
         leadId: quotation.leadId?._id || quotation.leadId || '',
         items: quotation.items.map((i) => ({ ...i })),

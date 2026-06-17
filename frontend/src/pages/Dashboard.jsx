@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import {
   startOfMonth, endOfMonth, isWithinInterval, isToday, subDays,
 } from 'date-fns'
@@ -6,7 +6,7 @@ import { useLeads } from '../hooks/useLeads'
 import { useTasks, useUpdateTask } from '../hooks/useTasks'
 import { useQuotations } from '../hooks/useQuotations'
 import { useCurrentUser, useUsers } from '../hooks/useUsers'
-import { DollarSign, Target, Activity, FileText, CheckCircle, AlertTriangle, TrendingUp } from 'lucide-react'
+import { DollarSign, Target, Activity, FileText, CheckCircle, AlertTriangle } from 'lucide-react'
 import PipelineChart from '@/components/application/charts/PipelineChart'
 import LeadSourcesChart from '@/components/application/charts/LeadSourcesChart'
 import RevenueTrendChart from '@/components/application/charts/RevenueTrendChart'
@@ -75,7 +75,6 @@ export default function Dashboard() {
   )
 
   /* ── lead sources donut data ── */
-  const sourceColors = ['#3b82f6', '#8b5cf6', '#14b8a6', '#f59e0b', '#ef4444', '#6366f1']
   const sourceData = useMemo(() => {
     const counts = {}
     for (const lead of leads || []) {
