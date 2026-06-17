@@ -106,6 +106,31 @@ describe('Lead Routes', () => {
       expect(res.body).toHaveLength(1);
       expect(res.body[0].companyName).toBe('Mine');
     });
+
+    it('search must treat regex metacharacters as literal', async () => {
+      // Regression test for the regex-injection fix in
+      // lead.controller.js#list: the ?search= query is escaped
+      // before being passed to $regex. Without the escape, "."
+      // would match any character and the second lead would
+      // be returned alongside the first.
+      await Lead.create({
+        companyName: 'A.B.C Manufacturing',
+        createdBy: user._id,
+        assignedTo: user._id,
+      });
+      await Lead.create({
+        companyName: 'AXBXC Manufacturing',
+        createdBy: user._id,
+        assignedTo: user._id,
+      });
+
+      // Supertest handles URL-encoding; the dots arrive as
+      // literal '.' in req.query.search.
+      const res = await request(app).get('/api/leads?search=A.B.C');
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveLength(1);
+      expect(res.body[0].companyName).toBe('A.B.C Manufacturing');
+    });
   });
 
   describe('GET /api/leads/:id', () => {

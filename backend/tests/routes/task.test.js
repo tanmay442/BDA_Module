@@ -5,6 +5,7 @@ const app = require('../../src/app');
 const User = require('../../src/modules/users/user.model');
 const Task = require('../../src/modules/tasks/task.model');
 const Lead = require('../../src/modules/leads/lead.model');
+const AuditLog = require('../../src/modules/auditLogs/auditLog.model');
 
 jest.mock('@clerk/express', () => ({
   clerkMiddleware: () => (req, res, next) => next(),
@@ -158,6 +159,21 @@ describe('Task Routes', () => {
       expect(res.body.title).toBe('Updated');
       expect(res.body.status).toBe('completed');
     });
+
+    it('should write a task_updated audit log entry', async () => {
+      const task = await Task.create({ title: 'Auditable', assignedTo: user._id });
+
+      const res = await request(app)
+        .patch(`/api/tasks/${task._id}`)
+        .send({ status: 'completed' });
+
+      expect(res.status).toBe(200);
+      const log = await AuditLog.findOne({ entityId: task._id, action: 'task_updated' });
+      expect(log).toBeDefined();
+      expect(log.entityType).toBe('Task');
+      expect(log.userId.toString()).toBe(user._id.toString());
+      expect(log.newValue.fields).toEqual(expect.arrayContaining(['status']));
+    });
   });
 
   describe('DELETE /api/tasks/:id', () => {
@@ -168,6 +184,24 @@ describe('Task Routes', () => {
 
       expect(res.status).toBe(200);
       expect(await Task.findById(task._id)).toBeNull();
+    });
+
+    it('should write a task_deleted audit log entry with oldValue', async () => {
+      const task = await Task.create({
+        title: 'Audit Delete',
+        status: 'pending',
+        assignedTo: user._id,
+      });
+
+      const res = await request(app).delete(`/api/tasks/${task._id}`);
+
+      expect(res.status).toBe(200);
+      const log = await AuditLog.findOne({ entityId: task._id, action: 'task_deleted' });
+      expect(log).toBeDefined();
+      expect(log.entityType).toBe('Task');
+      expect(log.userId.toString()).toBe(user._id.toString());
+      expect(log.oldValue.title).toBe('Audit Delete');
+      expect(log.oldValue.status).toBe('pending');
     });
   });
 });
