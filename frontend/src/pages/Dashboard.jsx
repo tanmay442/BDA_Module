@@ -31,9 +31,13 @@ export default function Dashboard() {
   const updateTask = useUpdateTask()
 
   const isManager = currentUser?.role === 'admin' || currentUser?.role === 'manager'
-  const now = new Date()
-  const monthStart = startOfMonth(now)
-  const monthEnd = endOfMonth(now)
+  // Memoize the clock read so monthStart/monthEnd keep referential
+  // identity across renders. Without this, the `wonMtd` useMemo
+  // recomputes on every render and React Compiler flags the deps
+  // as potentially-mutated.
+  const now = useMemo(() => new Date(), [])
+  const monthStart = useMemo(() => startOfMonth(now), [now])
+  const monthEnd = useMemo(() => endOfMonth(now), [now])
 
   /* ── computed shared ── */
   const activeLeads = useMemo(() => (leads || []).filter((l) => l.currentStage !== 'won' && l.currentStage !== 'lost'), [leads])
