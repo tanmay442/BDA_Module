@@ -1,0 +1,20 @@
+{
+  "name": "bda-module",
+  "version": "1.0.0",
+  "private": true,
+  "description": "SalesOps monorepo (frontend + serverless API) deployed to Vercel.",
+  "scripts": {
+    "build": "echo 'Monorepo build is handled by vercel.json'"
+  },
+  "dependencies": {
+    "@clerk/express": "^2.1.21",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^7.5.0",
+    "mongoose": "^9.6.2",
+    "pdfkit": "^0.18.0",
+    "pusher": "^5.3.3",
+    "svix": "^1.42.0"
+  }
+}
