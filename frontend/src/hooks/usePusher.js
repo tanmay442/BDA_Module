@@ -44,11 +44,11 @@ const channelEvents = [
   },
 ]
 
-export default function usePusher() {
+export default function usePusher({ enabled = true } = {}) {
   const qc = useQueryClient()
 
   useEffect(() => {
-    if (!PUSHER_KEY) {
+    if (!PUSHER_KEY || !enabled) {
       // In environments where the Pusher key isn't configured (sign-in
       // pages, preview deploys without env) we skip connecting entirely
       // rather than failing or hitting a wrong key.
@@ -69,5 +69,5 @@ export default function usePusher() {
       subscriptions.forEach((ch) => pusher.unsubscribe(ch.name))
       pusher.disconnect()
     }
-  }, [qc])
+  }, [qc, enabled])
 }

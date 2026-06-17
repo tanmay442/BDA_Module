@@ -1,6 +1,6 @@
 import React from 'react'
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom'
-import { ClerkProvider, SignedIn, SignedOut, useAuth } from '@clerk/clerk-react'
+import { ClerkProvider, SignedIn, SignedOut, useAuth, useUser } from '@clerk/clerk-react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { setTokenProvider } from './services/api'
 import usePusher from './hooks/usePusher'
@@ -21,8 +21,12 @@ const queryClient = new QueryClient()
 
 function ClerkTokenProvider({ children }) {
   const { getToken } = useAuth()
+  const { isSignedIn } = useUser()
   React.useEffect(() => { setTokenProvider(getToken) }, [getToken])
-  usePusher()
+  // Gate the actual Pusher connection on the signed-in state by
+  // passing the flag through, so the hook itself stays unconditional
+  // (rules of hooks) and the connection only opens after sign-in.
+  usePusher({ enabled: isSignedIn })
   return children
 }
 
@@ -41,9 +45,23 @@ function ProtectedRoute() {
 }
 
 function OnboardingGate() {
-  const { data: currentUser, isLoading } = useCurrentUser()
+  const { data: currentUser, isLoading, isError } = useCurrentUser()
 
-  if (isLoading) return null
+  // Show a tiny loading skeleton while the auth handshake + the
+  // /users/me round-trip are pending. Without this, the page can
+  // flash blank for up to 30s on a slow connection.
+  if (isLoading) {
+    return (
+      <div className="flex h-screen min-h-[100dvh] items-center justify-center bg-gray-50/70">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+      </div>
+    )
+  }
+
+  if (isError) {
+    // /users/me 401'd (stale session) — bounce to sign-in.
+    return <Navigate to="/sign-in" replace />
+  }
 
   if (currentUser && (!currentUser.company || !currentUser.role)) {
     return <OnboardingPage />
