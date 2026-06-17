@@ -116,5 +116,40 @@ describe('User Routes', () => {
 
       expect(res.status).toBe(403);
     });
+
+    it('should reject invalid role values', async () => {
+      const admin = await User.create({
+        clerkId: 'clerk_admin_bad',
+        name: 'Admin Bad',
+        email: 'adminbad@example.com',
+        role: 'admin',
+      });
+      getAuth.mockReturnValue({ userId: 'clerk_admin_bad' });
+
+      const target = await User.create({
+        clerkId: 'clerk_target_bad',
+        name: 'Target Bad',
+        email: 'targetbad@example.com',
+        role: 'bda',
+      });
+      const res = await request(app)
+        .patch(`/api/users/${target._id}/role`)
+        .send({ role: 'superadmin' });
+      expect(res.status).toBe(400);
+    });
+
+    it('should refuse to demote the last remaining admin', async () => {
+      const admin = await User.create({
+        clerkId: 'clerk_only_admin',
+        name: 'Only Admin',
+        email: 'onlyadmin@example.com',
+        role: 'admin',
+      });
+      getAuth.mockReturnValue({ userId: 'clerk_only_admin' });
+      const res = await request(app)
+        .patch(`/api/users/${admin._id}/role`)
+        .send({ role: 'manager' });
+      expect(res.status).toBe(400);
+    });
   });
 });

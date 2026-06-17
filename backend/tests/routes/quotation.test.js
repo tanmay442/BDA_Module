@@ -200,4 +200,94 @@ describe('Quotation Routes', () => {
       expect(res.headers['content-type']).toBe('application/pdf');
     });
   });
+
+  describe('Quotation ↔ Lead stage cascade', () => {
+    it('PATCH status:sent should auto-push the lead into quotation_sent', async () => {
+      const leadInReq = await Lead.create({
+        companyName: 'Cascade Lead',
+        createdBy: user._id,
+        assignedTo: user._id,
+        currentStage: 'requirement_gathered',
+      });
+      const q = await Quotation.create({
+        leadId: leadInReq._id,
+        items: [{ productName: 'X', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        subtotal: 100, tax: 0, grandTotal: 100,
+        quotationNumber: 'Q-CASCADE-0001',
+        createdBy: user._id,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ status: 'sent' });
+      expect(res.status).toBe(200);
+      const updatedLead = await mongoose.model('Lead').findById(leadInReq._id);
+      expect(updatedLead.currentStage).toBe('quotation_sent');
+    });
+
+    it('PATCH status:accepted should auto-push the lead into won', async () => {
+      const wonLead = await Lead.create({
+        companyName: 'Won Lead',
+        createdBy: user._id,
+        assignedTo: user._id,
+        currentStage: 'negotiation',
+      });
+      const q = await Quotation.create({
+        leadId: wonLead._id,
+        items: [{ productName: 'Y', quantity: 1, unitPrice: 200, totalPrice: 200 }],
+        subtotal: 200, tax: 0, grandTotal: 200,
+        quotationNumber: 'Q-WON-0001',
+        createdBy: user._id,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ status: 'accepted' });
+      expect(res.status).toBe(200);
+      const updatedLead = await mongoose.model('Lead').findById(wonLead._id);
+      expect(updatedLead.currentStage).toBe('won');
+    });
+
+    it('PATCH on a non-status field should NOT bump the version', async () => {
+      const q = await Quotation.create({
+        leadId: lead._id,
+        items: [{ productName: 'Z', quantity: 1, unitPrice: 50, totalPrice: 50 }],
+        subtotal: 50, tax: 0, grandTotal: 50,
+        quotationNumber: 'Q-VERSION-0001',
+        createdBy: user._id,
+        version: 1,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ grandTotal: 75 });
+      expect(res.status).toBe(200);
+      expect(res.body.version).toBe(1);
+    });
+
+    it('BDA cannot read a quotation they did not create', async () => {
+      // Owner is the test user (clerk_quote_route); the requester
+      // is a different BDA (clerk_other_quote), so the controller
+      // must 404.
+      const otherLead = await Lead.create({
+        companyName: 'Other Lead',
+        createdBy: user._id,
+        assignedTo: user._id,
+      });
+      const q = await Quotation.create({
+        leadId: otherLead._id,
+        items: [{ productName: 'S', quantity: 1, unitPrice: 10, totalPrice: 10 }],
+        subtotal: 10, tax: 0, grandTotal: 10,
+        quotationNumber: 'Q-OTHER-0001',
+        createdBy: user._id,
+      });
+      const otherUser = await User.create({
+        clerkId: 'clerk_other_quote',
+        name: 'Other Quote',
+        email: 'otherquote@example.com',
+        role: 'bda',
+      });
+      getAuth.mockReturnValue({ userId: 'clerk_other_quote' });
+      const res = await request(app).get(`/api/quotations/${q._id}`);
+      expect(res.status).toBe(404);
+      getAuth.mockReturnValue({ userId: 'clerk_quote_route' });
+    });
+  });
 });
