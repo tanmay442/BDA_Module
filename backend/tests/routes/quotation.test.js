@@ -81,6 +81,32 @@ describe('Quotation Routes', () => {
         .send({ ...validQuote(), items: [] });
       expect(res.status).toBe(400);
     });
+
+    it('BDA gets 404 (not 403) when quoting a non-existent lead', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .post('/api/quotations')
+        .send({ ...validQuote(), leadId: fakeId.toString() });
+      expect(res.status).toBe(404);
+    });
+
+    it('BDA gets 403 when quoting a lead owned by someone else', async () => {
+      const otherUser = await User.create({
+        clerkId: 'clerk_other_quote_owner',
+        name: 'Other Owner',
+        email: 'otherowner@example.com',
+        role: 'bda',
+      });
+      const otherLead = await Lead.create({
+        companyName: 'Other Owner Lead',
+        createdBy: otherUser._id,
+        assignedTo: otherUser._id,
+      });
+      const res = await request(app)
+        .post('/api/quotations')
+        .send({ ...validQuote(), leadId: otherLead._id.toString() });
+      expect(res.status).toBe(403);
+    });
   });
 
   describe('GET /api/quotations', () => {
@@ -246,6 +272,50 @@ describe('Quotation Routes', () => {
       expect(updatedLead.currentStage).toBe('won');
     });
 
+    it('PATCH status:accepted on a lead already in "lost" must NOT resurrect it', async () => {
+      const lostLead = await Lead.create({
+        companyName: 'Lost Lead',
+        createdBy: user._id,
+        assignedTo: user._id,
+        currentStage: 'lost',
+      });
+      const q = await Quotation.create({
+        leadId: lostLead._id,
+        items: [{ productName: 'L', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        subtotal: 100, tax: 0, grandTotal: 100,
+        quotationNumber: 'Q-LOST-0001',
+        createdBy: user._id,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ status: 'accepted' });
+      expect(res.status).toBe(200);
+      const updatedLead = await mongoose.model('Lead').findById(lostLead._id);
+      expect(updatedLead.currentStage).toBe('lost'); // cascade skipped
+    });
+
+    it('PATCH status:sent on a lead already in "won" must NOT resurrect it', async () => {
+      const wonLead = await Lead.create({
+        companyName: 'Already Won',
+        createdBy: user._id,
+        assignedTo: user._id,
+        currentStage: 'won',
+      });
+      const q = await Quotation.create({
+        leadId: wonLead._id,
+        items: [{ productName: 'W', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        subtotal: 100, tax: 0, grandTotal: 100,
+        quotationNumber: 'Q-WONALREADY-0001',
+        createdBy: user._id,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ status: 'sent' });
+      expect(res.status).toBe(200);
+      const updatedLead = await mongoose.model('Lead').findById(wonLead._id);
+      expect(updatedLead.currentStage).toBe('won'); // cascade skipped
+    });
+
     it('PATCH on a non-status field should NOT bump the version', async () => {
       const q = await Quotation.create({
         leadId: lead._id,
@@ -260,6 +330,40 @@ describe('Quotation Routes', () => {
         .send({ grandTotal: 75 });
       expect(res.status).toBe(200);
       expect(res.body.version).toBe(1);
+    });
+
+    it('PATCH must ignore a client-supplied version on a non-status edit', async () => {
+      const q = await Quotation.create({
+        leadId: lead._id,
+        items: [{ productName: 'V', quantity: 1, unitPrice: 50, totalPrice: 50 }],
+        subtotal: 50, tax: 0, grandTotal: 50,
+        quotationNumber: 'Q-FORGE-0001',
+        createdBy: user._id,
+        version: 3,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ grandTotal: 75, version: 999 });
+      expect(res.status).toBe(200);
+      // The server owns the version; the client's 999 must be ignored.
+      expect(res.body.version).toBe(3);
+    });
+
+    it('PATCH must compute its own version bump on a status change (not the client\'s)', async () => {
+      const q = await Quotation.create({
+        leadId: lead._id,
+        items: [{ productName: 'B', quantity: 1, unitPrice: 50, totalPrice: 50 }],
+        subtotal: 50, tax: 0, grandTotal: 50,
+        quotationNumber: 'Q-BUMP-0001',
+        createdBy: user._id,
+        version: 2,
+      });
+      const res = await request(app)
+        .patch(`/api/quotations/${q._id}`)
+        .send({ status: 'sent', version: 999 });
+      expect(res.status).toBe(200);
+      // Server bumps 2 -> 3; client's 999 is ignored.
+      expect(res.body.version).toBe(3);
     });
 
     it('BDA cannot read a quotation they did not create', async () => {

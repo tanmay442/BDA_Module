@@ -120,10 +120,18 @@ exports.getById = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
-    // BDA can only create quotations against leads they own.
-    if (req.user.role === 'bda' && req.body.leadId) {
+    // BDA can only create quotations against leads they own. Return
+    // 404 for the not-found case and 403 for the not-yours case so
+    // the response code itself doesn't leak which lead ids exist.
+    if (req.body.leadId) {
       const lead = await Lead.findById(req.body.leadId).select('assignedTo');
-      if (!lead || lead.assignedTo?.toString() !== req.user._id.toString()) {
+      if (!lead) {
+        return res.status(404).json({ message: 'Lead not found' });
+      }
+      if (
+        req.user.role === 'bda'
+        && lead.assignedTo?.toString() !== req.user._id.toString()
+      ) {
         return res.status(403).json({ message: 'Not authorized to quote this lead' });
       }
     }
@@ -172,14 +180,10 @@ exports.update = async (req, res, next) => {
       return res.status(403).json({ message: 'Not authorized to edit this quotation' });
     }
 
-    // Bump version only on a real status transition. We do not bump on
-    // any other field edit, and we do not bump when the status didn't
-    // change (e.g. user just edited a line item). This stops
-    // "version = write counter" behavior.
+    // Version is server-owned: bump on a real status change, leave
+    // it alone on every other edit. Removing the client override
+    // path prevents a caller from forging the write counter.
     const statusChanged = req.body.status && req.body.status !== existing.status;
-    if (statusChanged) {
-      req.body.version = (existing.version || 1) + 1;
-    }
 
     // Build an allowlisted update document so callers cannot overwrite
     // leadId, createdBy, quotationNumber, or other immutable fields.
@@ -187,7 +191,9 @@ exports.update = async (req, res, next) => {
     for (const field of QUOTATION_UPDATE_FIELDS) {
       if (field in req.body) update[field] = req.body[field];
     }
-    if (!statusChanged) delete update.version; // don't touch it on non-status edits
+    update.version = statusChanged
+      ? (existing.version || 1) + 1
+      : (existing.version || 1);
 
     const quotation = await Quotation.findByIdAndUpdate(req.params.id, update, {
       returnDocument: 'after',
@@ -202,7 +208,12 @@ exports.update = async (req, res, next) => {
     if (statusChanged && FORWARD_STATUSES.has(quotation.status)) {
       const impliedStage = STATUS_TO_LEAD_STAGE[quotation.status];
       const lead = await Lead.findById(quotation.leadId);
-      if (lead && lead.currentStage !== impliedStage) {
+      // Terminal lead stages (won, lost) are sticky: a quotation
+      // status change must never resurrect a lead out of 'lost' or
+      // 'won'. The lead.stageTransition route enforces the same
+      // rule, so the cascade has to mirror it.
+      const isTerminal = lead && ['won', 'lost'].includes(lead.currentStage);
+      if (lead && !isTerminal && lead.currentStage !== impliedStage) {
         const oldStage = lead.currentStage;
         lead.currentStage = impliedStage;
         await lead.save();
