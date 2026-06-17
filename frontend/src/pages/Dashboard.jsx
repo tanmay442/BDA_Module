@@ -46,9 +46,10 @@ export default function Dashboard() {
     () => wonLeads.filter((l) => isWithinInterval(new Date(l.createdAt), { start: monthStart, end: monthEnd })),
     [wonLeads, monthStart, monthEnd],
   )
-  const winLossRatio = leads?.length
-    ? Math.round((wonLeads.length / (wonLeads.length + lostLeads.length || 1)) * 100)
-    : 0
+  const totalClosed = wonLeads.length + lostLeads.length
+  const winLossRatio = totalClosed > 0
+    ? Math.round((wonLeads.length / totalClosed) * 100)
+    : null
 
   /* ── pipeline funnel data ── */
   const stageCounts = useMemo(() => {
@@ -103,10 +104,15 @@ export default function Dashboard() {
     const map = {}
     for (const lead of leads || []) {
       const name = lead.assignedTo?.name || 'Unassigned'
-      if (!map[name]) map[name] = { total: 0, won: 0, value: 0 }
-      map[name].total++
-      map[name].value += lead.expectedDealValue || 0
-      if (lead.currentStage === 'won') map[name].won++
+      // Use the BDA _id (or a sentinel for the unassigned bucket) as the
+      // stable sort key. Sorting by value causes bars to shuffle on every
+      // Pusher invalidation when totals are close, which reads as visual
+      // noise. Sorting by _id keeps each bar pinned to its owner.
+      const bdaId = lead.assignedTo?._id || '__unassigned__'
+      if (!map[bdaId]) map[bdaId] = { name, total: 0, won: 0, value: 0 }
+      map[bdaId].total++
+      map[bdaId].value += lead.expectedDealValue || 0
+      if (lead.currentStage === 'won') map[bdaId].won++
     }
     return map
   }, [leads])
@@ -114,8 +120,8 @@ export default function Dashboard() {
   const barData = useMemo(
     () =>
       Object.entries(leadsByBda)
-        .map(([name, stats]) => ({ name, value: stats.value }))
-        .sort((a, b) => b.value - a.value),
+        .map(([bdaId, stats]) => ({ bdaId, name: stats.name, value: stats.value }))
+        .sort((a, b) => a.bdaId.localeCompare(b.bdaId)),
     [leadsByBda],
   )
 
@@ -172,7 +178,7 @@ export default function Dashboard() {
           <>
             <KPICard icon={DollarSign} label="Total Pipeline Value" value={fmtCurrency(totalValue)} />
             <KPICard icon={CheckCircle} label="Revenue Won (MTD)" value={fmtCurrency(monthlyAchieved)} />
-            <KPICard icon={Target} label="Win / Loss Ratio" value={`${winLossRatio}%`} />
+            <KPICard icon={Target} label="Win / Loss Ratio" value={winLossRatio === null ? "n/a" : `${winLossRatio}%`} />
             <KPICard icon={FileText} label="Pending Approvals" value={quotations?.filter((q) => q.status === 'draft' || q.status === 'sent').length || 0} />
           </>
         ) : (

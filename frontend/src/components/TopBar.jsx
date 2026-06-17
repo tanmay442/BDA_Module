@@ -11,6 +11,7 @@ export default function TopBar({ onMenuClick }) {
   const [showReminders, setShowReminders] = useState(false)
 
   const dueCount = (reminders?.dueToday?.length || 0) + (reminders?.overdue?.length || 0)
+  const upcomingCount = reminders?.upcoming?.length || 0
 
   return (
     <header className="flex h-16 items-center justify-between border-b border-border-secondary bg-primary px-4 lg:px-6">
@@ -29,17 +30,24 @@ export default function TopBar({ onMenuClick }) {
       </div>
       <div className="flex items-center gap-4">
         <div className="relative">
-          <button
-            onClick={() => setShowReminders(!showReminders)}
-            className="relative flex size-9 items-center justify-center rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover"
-          >
-            <Bell01 className="size-5" />
-            {dueCount > 0 && (
-              <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
-                {dueCount > 9 ? '9+' : dueCount}
+          <div className="flex flex-col items-center">
+            <button
+              onClick={() => setShowReminders(!showReminders)}
+              className="relative flex size-9 items-center justify-center rounded-lg text-fg-quaternary hover:bg-primary_hover hover:text-fg-quaternary_hover"
+            >
+              <Bell01 className="size-5" />
+              {dueCount > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-bold text-white">
+                  {dueCount > 9 ? '9+' : dueCount}
+                </span>
+              )}
+            </button>
+            {upcomingCount > 0 && (
+              <span className="mt-0.5 text-[10px] text-fg-quaternary">
+                {upcomingCount} upcoming
               </span>
             )}
-          </button>
+          </div>
           {showReminders && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setShowReminders(false)} />

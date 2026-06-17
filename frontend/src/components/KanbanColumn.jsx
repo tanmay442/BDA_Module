@@ -43,6 +43,17 @@ export default function KanbanColumn({ stage, leads, onLeadClick }) {
               snapshot.isDraggingOver ? 'bg-blue-50/50' : ''
             }`}
           >
+            {leads.length === 0 && (
+              <div
+                className={`flex flex-1 items-center justify-center rounded-md border-2 border-dashed text-center text-xs ${
+                  snapshot.isDraggingOver
+                    ? 'border-blue-400 bg-blue-50/50 text-blue-600'
+                    : 'border-gray-200 text-gray-400'
+                }`}
+              >
+                Drop a lead here
+              </div>
+            )}
             {leads.map((lead, i) => (
               <LeadCard key={lead._id} lead={lead} index={i} onClick={() => onLeadClick?.(lead._id)} />
             ))}
