@@ -10,10 +10,17 @@ export default function OnboardingPage() {
   const { refetch } = useCurrentUser()
   const navigate = useNavigate()
   useDocumentTitle('Onboarding')
+  // VITE_COMPANY_NAME seeds the company field so multi-tenant deploys
+  // don't all show "ACME Manufacturing". The on-record value is still
+  // whatever the user submits (the backend stores it on the User doc),
+  // so the env value is purely a UI default and falls back to a generic
+  // literal when the env is unset.
+  const defaultCompany = import.meta.env.VITE_COMPANY_NAME || 'ACME Manufacturing'
+
   const [form, setForm] = useState({
     name: user?.fullName || user?.emailAddresses?.[0]?.emailAddress || '',
     role: '',
-    company: 'ACME Manufacturing',
+    company: defaultCompany,
   })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
