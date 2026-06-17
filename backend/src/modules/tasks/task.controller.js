@@ -1,4 +1,5 @@
 const Task = require('./task.model');
+const Lead = require('../leads/lead.model');
 const AuditLog = require('../auditLogs/auditLog.model');
 const { broadcast } = require('../../services/pusher');
 
@@ -74,6 +75,23 @@ exports.getById = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
+    // BDA can only create tasks against leads they own. Mirrors the
+    // quotation/activity create check. Return 404 for the
+    // not-found-or-not-mine case to avoid leaking which lead ids
+    // exist.
+    if (req.body.leadId) {
+      const lead = await Lead.findById(req.body.leadId).select('assignedTo');
+      if (!lead) {
+        return res.status(404).json({ message: 'Lead not found' });
+      }
+      if (
+        req.user.role === 'bda'
+        && lead.assignedTo?.toString() !== req.user._id.toString()
+      ) {
+        return res.status(403).json({ message: 'Not authorized for this lead' });
+      }
+    }
+
     // Strip server-controlled / non-allowlisted fields.
     const body = { ...req.body };
     delete body.createdBy; // server sets this from req.user

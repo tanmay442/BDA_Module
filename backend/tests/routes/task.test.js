@@ -4,6 +4,7 @@ const { connect, disconnect, clearDatabase } = require('../helpers');
 const app = require('../../src/app');
 const User = require('../../src/modules/users/user.model');
 const Task = require('../../src/modules/tasks/task.model');
+const Lead = require('../../src/modules/leads/lead.model');
 
 jest.mock('@clerk/express', () => ({
   clerkMiddleware: () => (req, res, next) => next(),
@@ -58,6 +59,45 @@ describe('Task Routes', () => {
         .send({ assignedTo: user._id });
 
       expect(res.status).toBe(400);
+    });
+
+    it('BDA gets 404 (not 403) when creating a task against a non-existent lead', async () => {
+      const fakeId = new mongoose.Types.ObjectId();
+      const res = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'Orphan', leadId: fakeId.toString() });
+      expect(res.status).toBe(404);
+    });
+
+    it('BDA gets 403 when creating a task against a lead owned by someone else', async () => {
+      const otherUser = await User.create({
+        clerkId: 'clerk_other_task_owner',
+        name: 'Other Task Owner',
+        email: 'othertaskowner@example.com',
+        role: 'bda',
+      });
+      const otherLead = await Lead.create({
+        companyName: 'Other Task Lead',
+        createdBy: otherUser._id,
+        assignedTo: otherUser._id,
+      });
+      const res = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'Not Mine', leadId: otherLead._id.toString() });
+      expect(res.status).toBe(403);
+    });
+
+    it('BDA can create a task against their own lead', async () => {
+      const ownLead = await Lead.create({
+        companyName: 'My Task Lead',
+        createdBy: user._id,
+        assignedTo: user._id,
+      });
+      const res = await request(app)
+        .post('/api/tasks')
+        .send({ title: 'Mine', leadId: ownLead._id.toString() });
+      expect(res.status).toBe(201);
+      expect(res.body.leadId).toBe(ownLead._id.toString());
     });
   });
 
