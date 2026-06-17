@@ -10,11 +10,13 @@ export default function OnboardingPage() {
   const { refetch } = useCurrentUser()
   const navigate = useNavigate()
   useDocumentTitle('Onboarding')
-  // VITE_COMPANY_NAME seeds the company field so multi-tenant deploys
-  // don't all show "ACME Manufacturing". The on-record value is still
-  // whatever the user submits (the backend stores it on the User doc),
-  // so the env value is purely a UI default and falls back to a generic
-  // literal when the env is unset.
+  // VITE_COMPANY_NAME is a per-deploy branding seed for the company
+  // input. This is single-tenant (one Clerk app / one Mongo / one
+  // domain) — the env just lets the deployer pre-fill the form so
+  // the TopBar shows their brand instead of the literal fallback.
+  // The on-record value is still whatever the user submits (the
+  // backend stores it on the User doc), so the env is purely a UI
+  // default.
   const defaultCompany = import.meta.env.VITE_COMPANY_NAME || 'ACME Manufacturing'
 
   const [form, setForm] = useState({
