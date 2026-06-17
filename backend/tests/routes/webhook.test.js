@@ -6,7 +6,11 @@ const User = require('../../src/modules/users/user.model');
 const AuditLog = require('../../src/modules/auditLogs/auditLog.model');
 const app = require('../../src/app');
 
-const SECRET = 'whsec_test_secret_for_unit_tests';
+// The svix Webhook constructor requires the secret to be a valid
+// base64-encoded string (the part after the whsec_ prefix). The
+// signPayload helper below also base64-decodes the same suffix to
+// derive the HMAC key, so this value must round-trip cleanly.
+const SECRET = 'whsec_dGVzdC1zZWNyZXQtMzItYnl0ZXMtbG9uZy1wYWRkaW5n';
 const KEY_ID = 'key_test_123';
 
 function signPayload(payload, ts = Math.floor(Date.now() / 1000)) {
