@@ -20,6 +20,10 @@ const taskSchema = new mongoose.Schema(
       ref: 'User',
       required: true,
     },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+    },
     dueDate: {
       type: Date,
     },
@@ -37,8 +41,10 @@ const taskSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-taskSchema.index({ assignedTo: 1 });
-taskSchema.index({ dueDate: 1 });
-taskSchema.index({ status: 1 });
+// BDA-scoped "give me my open tasks, ordered by due date" is the
+// hottest read path. Compound index keeps it O(log n) without
+// touching the documents.
+taskSchema.index({ assignedTo: 1, status: 1, dueDate: 1 });
+taskSchema.index({ leadId: 1 });
 
 module.exports = mongoose.model('Task', taskSchema);

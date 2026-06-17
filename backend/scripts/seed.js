@@ -1,6 +1,4 @@
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
-const path = require('path');
-require('dotenv').config({ path: path.join(__dirname, '..', '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '..', '.env') });
 const mongoose = require('mongoose');
 const User = require('../src/modules/users/user.model');
 const Lead = require('../src/modules/leads/lead.model');
@@ -8,6 +6,11 @@ const Task = require('../src/modules/tasks/task.model');
 const Activity = require('../src/modules/activities/activity.model');
 const Quotation = require('../src/modules/quotations/quotation.model');
 const Client = require('../src/modules/clients/client.model');
+
+if (process.env.NODE_ENV === 'production') {
+  console.error('Refusing to run seed in production');
+  process.exit(1);
+}
 
 const today = new Date('2026-06-05T09:00:00Z');
 const day = (offset) => new Date(today.getTime() + offset * 86400000);
@@ -24,6 +27,17 @@ const setTs = (Model, docs) =>
 async function seed() {
   await mongoose.connect(process.env.MONGO_URI);
   console.log('Connected to MongoDB');
+
+  // Safety: refuse to wipe a DB that has Clerk-synced users (any user
+  // whose clerkId doesn't start with 'seed_').
+  const realUsers = await User.countDocuments({ clerkId: { $not: /^seed_/ } });
+  if (realUsers > 0) {
+    console.error(
+      `Refusing to seed: ${realUsers} non-seed user(s) exist. ` +
+      'This script wipes all data. Run against an empty DB.'
+    );
+    process.exit(1);
+  }
 
   await Promise.all([
     User.deleteMany({}),

@@ -4,6 +4,7 @@ const { connect, disconnect, clearDatabase } = require('../helpers');
 const app = require('../../src/app');
 const User = require('../../src/modules/users/user.model');
 const Activity = require('../../src/modules/activities/activity.model');
+const Lead = require('../../src/modules/leads/lead.model');
 
 jest.mock('@clerk/express', () => ({
   clerkMiddleware: () => (req, res, next) => next(),
@@ -15,6 +16,7 @@ const { getAuth } = require('@clerk/express');
 describe('Activity Routes', () => {
   let user;
   let leadId;
+  let lead;
 
   beforeAll(async () => {
     await connect();
@@ -24,7 +26,8 @@ describe('Activity Routes', () => {
       email: 'actroute@example.com',
       role: 'bda',
     });
-    leadId = new mongoose.Types.ObjectId();
+    lead = await Lead.create({ companyName: 'Act Lead', createdBy: user._id, assignedTo: user._id });
+    leadId = lead._id;
     getAuth.mockReturnValue({ userId: 'clerk_act_route' });
   });
 
@@ -40,6 +43,8 @@ describe('Activity Routes', () => {
       email: 'actroute@example.com',
       role: 'bda',
     });
+    lead = await Lead.create({ companyName: 'Act Lead', createdBy: user._id, assignedTo: user._id });
+    leadId = lead._id;
     getAuth.mockReturnValue({ userId: 'clerk_act_route' });
   });
 

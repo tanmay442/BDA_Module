@@ -4,6 +4,7 @@ const { connect, disconnect, clearDatabase } = require('../helpers');
 const app = require('../../src/app');
 const User = require('../../src/modules/users/user.model');
 const Client = require('../../src/modules/clients/client.model');
+const Lead = require('../../src/modules/leads/lead.model');
 
 jest.mock('@clerk/express', () => ({
   clerkMiddleware: () => (req, res, next) => next(),
@@ -15,6 +16,7 @@ const { getAuth } = require('@clerk/express');
 describe('Client Routes', () => {
   let user;
   let leadId;
+  let lead;
 
   beforeAll(async () => {
     await connect();
@@ -24,7 +26,8 @@ describe('Client Routes', () => {
       email: 'clientroute@example.com',
       role: 'bda',
     });
-    leadId = new mongoose.Types.ObjectId();
+    lead = await Lead.create({ companyName: 'Client Lead', createdBy: user._id, assignedTo: user._id });
+    leadId = lead._id;
     getAuth.mockReturnValue({ userId: 'clerk_client_route' });
   });
 
@@ -40,6 +43,8 @@ describe('Client Routes', () => {
       email: 'clientroute@example.com',
       role: 'bda',
     });
+    lead = await Lead.create({ companyName: 'Client Lead', createdBy: user._id, assignedTo: user._id });
+    leadId = lead._id;
     getAuth.mockReturnValue({ userId: 'clerk_client_route' });
   });
 
@@ -56,9 +61,10 @@ describe('Client Routes', () => {
 
   describe('GET /api/clients', () => {
     it('should list clients', async () => {
+      const otherLead = await Lead.create({ companyName: 'Other Lead', createdBy: user._id, assignedTo: user._id });
       await Client.create({ leadId, companyName: 'Client A', accountManager: user._id });
       await Client.create({
-        leadId: new mongoose.Types.ObjectId(),
+        leadId: otherLead._id,
         companyName: 'Client B',
         accountManager: user._id,
       });

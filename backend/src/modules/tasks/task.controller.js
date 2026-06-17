@@ -2,9 +2,31 @@ const Task = require('./task.model');
 const AuditLog = require('../auditLogs/auditLog.model');
 const { broadcast } = require('../../services/pusher');
 
+const TASK_UPDATE_FIELDS = [
+  'title',
+  'description',
+  'leadId',
+  'assignedTo',
+  'dueDate',
+  'priority',
+  'status',
+];
+
+async function loadTaskForUser(req, taskId) {
+  const task = await Task.findById(taskId);
+  if (!task) return { error: 404 };
+  if (
+    req.user.role === 'bda'
+    && task.assignedTo.toString() !== req.user._id.toString()
+  ) {
+    return { error: 404 };
+  }
+  return { task };
+}
+
 exports.list = async (req, res, next) => {
   try {
-    const { status, priority, leadId } = req.query;
+    const { status, priority, leadId, page, limit } = req.query;
     const filter = {};
 
     if (status) filter.status = status;
@@ -15,11 +37,21 @@ exports.list = async (req, res, next) => {
       filter.assignedTo = req.user._id;
     }
 
-    const tasks = await Task.find(filter)
-      .populate('assignedTo', 'name email')
-      .populate('leadId', 'companyName')
-      .sort('-createdAt');
+    const lim = Math.min(Math.max(parseInt(limit, 10) || 50, 1), 100);
+    const pg = Math.max(parseInt(page, 10) || 1, 1);
+    const skip = (pg - 1) * lim;
 
+    const [tasks, total] = await Promise.all([
+      Task.find(filter)
+        .populate('assignedTo', 'name email')
+        .populate('leadId', 'companyName')
+        .sort('-createdAt')
+        .skip(skip)
+        .limit(lim),
+      Task.countDocuments(filter),
+    ]);
+
+    res.set('X-Total-Count', String(total));
     res.json(tasks);
   } catch (error) {
     next(error);
@@ -28,15 +60,13 @@ exports.list = async (req, res, next) => {
 
 exports.getById = async (req, res, next) => {
   try {
-    const task = await Task.findById(req.params.id)
+    const { task, error } = await loadTaskForUser(req, req.params.id);
+    if (error) return res.status(error).json({ message: 'Task not found' });
+
+    const populated = await Task.findById(task._id)
       .populate('assignedTo', 'name email')
       .populate('leadId', 'companyName');
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
-
-    res.json(task);
+    res.json(populated);
   } catch (error) {
     next(error);
   }
@@ -44,10 +74,15 @@ exports.getById = async (req, res, next) => {
 
 exports.create = async (req, res, next) => {
   try {
+    // Strip server-controlled / non-allowlisted fields.
+    const body = { ...req.body };
+    delete body.createdBy; // server sets this from req.user
+    delete body.status; // default to 'pending'
+
     const task = await Task.create({
-      ...req.body,
+      ...body,
       createdBy: req.user._id,
-      assignedTo: req.body.assignedTo || req.user._id,
+      assignedTo: body.assignedTo || req.user._id,
     });
 
     await AuditLog.create({
@@ -67,14 +102,23 @@ exports.create = async (req, res, next) => {
 
 exports.update = async (req, res, next) => {
   try {
-    const task = await Task.findByIdAndUpdate(req.params.id, req.body, {
+    const { task: existing, error } = await loadTaskForUser(req, req.params.id);
+    if (error) return res.status(error).json({ message: 'Task not found' });
+
+    const update = {};
+    for (const field of TASK_UPDATE_FIELDS) {
+      if (field in req.body) update[field] = req.body[field];
+    }
+
+    if (update.assignedTo && req.user.role === 'bda') {
+      // BDA can mark their task done but can't reassign it.
+      return res.status(403).json({ message: 'Only admins/managers can reassign tasks' });
+    }
+
+    const task = await Task.findByIdAndUpdate(req.params.id, update, {
       returnDocument: 'after',
       runValidators: true,
     });
-
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
 
     broadcast('tasks', 'task:updated', { id: task._id });
     res.json(task);
@@ -85,13 +129,12 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    const task = await Task.findByIdAndDelete(req.params.id);
+    const { error } = await loadTaskForUser(req, req.params.id);
+    if (error) return res.status(error).json({ message: 'Task not found' });
 
-    if (!task) {
-      return res.status(404).json({ message: 'Task not found' });
-    }
+    await Task.findByIdAndDelete(req.params.id);
 
-    broadcast('tasks', 'task:deleted', { id: task._id });
+    broadcast('tasks', 'task:deleted', { id: req.params.id });
     res.json({ message: 'Task deleted' });
   } catch (error) {
     next(error);

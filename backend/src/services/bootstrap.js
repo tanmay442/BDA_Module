@@ -6,10 +6,11 @@ const AuditLog = require('../modules/auditLogs/auditLog.model');
  * deduped). Empty array means "bootstrap disabled".
  */
 function getBootstrapEmails() {
-  return (process.env.BOOTSTRAP_ADMIN_EMAILS || '')
+  const raw = (process.env.BOOTSTRAP_ADMIN_EMAILS || '')
     .split(',')
     .map((s) => s.trim().toLowerCase())
     .filter(Boolean);
+  return Array.from(new Set(raw));
 }
 
 /**
@@ -32,11 +33,18 @@ async function promoteIfBootstrapEmail(user) {
 
   if (!allowed.includes(user.email.toLowerCase())) return false;
 
+  // Already admin — nothing to do.
+  if (user.role === 'admin') return false;
+
+  // Don't promote if an admin already exists (the first-admin
+  // window is closed). This is the gate that stops a second
+  // sign-in from sneaking in.
+  const existingAdminCount = await User.countDocuments({ role: 'admin' });
+  if (existingAdminCount > 0) return false;
+
   // Atomic check-and-promote: only promote if no admin exists AND the
   // user isn't already an admin. Avoids race conditions where two
   // users sign up at the same moment and both qualify.
-  if (user.role === 'admin') return false;
-
   const result = await User.updateOne(
     { _id: user._id, role: { $ne: 'admin' } },
     { $set: { role: 'admin' } }
@@ -44,10 +52,6 @@ async function promoteIfBootstrapEmail(user) {
 
   if (result.modifiedCount === 0) return false;
 
-  // Audit the bootstrap action. No human actor, so we use a null
-  // userId + system flag (see auditLog.model.js) -- but AuditLog
-  // currently requires userId. Use a sentinel ObjectId of zeros
-  // and a clear `action` so admins can grep for it.
   try {
     await AuditLog.create({
       userId: user._id,           // the user who was promoted
@@ -81,13 +85,11 @@ async function promoteIfBootstrapEmail(user) {
 async function ensureBootstrapAdmins() {
   const allowed = getBootstrapEmails();
   if (allowed.length === 0) {
-    console.log('[bootstrap] BOOTSTRAP_ADMIN_EMAILS not set, skipping');
     return { promoted: 0 };
   }
 
   const adminCount = await User.countDocuments({ role: 'admin' });
   if (adminCount > 0) {
-    console.log(`[bootstrap] ${adminCount} admin(s) exist, no action`);
     return { promoted: 0, existingAdmins: adminCount };
   }
 
@@ -102,11 +104,6 @@ async function ensureBootstrapAdmins() {
     if (ok) promoted += 1;
   }
 
-  if (promoted > 0) {
-    console.log(`[bootstrap] promoted ${promoted} user(s) to admin`);
-  } else {
-    console.log('[bootstrap] no matching users yet (they will be promoted on first sign-in)');
-  }
   return { promoted };
 }
 

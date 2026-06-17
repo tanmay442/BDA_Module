@@ -34,8 +34,14 @@ describe('User Model', () => {
     await expect(User.create({ name: 'No Clerk' })).rejects.toThrow();
   });
 
-  it('should require name', async () => {
-    await expect(User.create({ clerkId: 'test' })).rejects.toThrow();
+  it('should default name to a placeholder when missing', async () => {
+    // Name is not strictly required (Clerk webhook may sync email
+    // before the user's name is set). The auth middleware's upsert
+    // path uses 'Pending' as a placeholder and the webhook refreshes
+    // it on user.updated.
+    const u = await User.create({ clerkId: 'placeholder' });
+    expect(u).toBeDefined();
+    expect(u.name).toBe('Pending');
   });
 
   it('should enforce unique clerkId', async () => {

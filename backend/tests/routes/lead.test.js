@@ -110,7 +110,7 @@ describe('Lead Routes', () => {
 
   describe('GET /api/leads/:id', () => {
     it('should get a lead by id', async () => {
-      const lead = await Lead.create({ companyName: 'Specific Co', createdBy: user._id });
+      const lead = await Lead.create({ companyName: 'Specific Co', createdBy: user._id, assignedTo: user._id });
 
       const res = await request(app).get(`/api/leads/${lead._id}`);
 
@@ -126,7 +126,7 @@ describe('Lead Routes', () => {
 
   describe('PATCH /api/leads/:id', () => {
     it('should update a lead', async () => {
-      const lead = await Lead.create({ companyName: 'Old Name', createdBy: user._id });
+      const lead = await Lead.create({ companyName: 'Old Name', createdBy: user._id, assignedTo: user._id });
 
       const res = await request(app)
         .patch(`/api/leads/${lead._id}`)
@@ -147,7 +147,7 @@ describe('Lead Routes', () => {
 
   describe('PATCH /api/leads/:id/stage', () => {
     it('should transition a lead stage', async () => {
-      const lead = await Lead.create({ companyName: 'Stage Co', createdBy: user._id });
+      const lead = await Lead.create({ companyName: 'Stage Co', createdBy: user._id, assignedTo: user._id });
 
       const res = await request(app)
         .patch(`/api/leads/${lead._id}/stage`)
@@ -158,7 +158,7 @@ describe('Lead Routes', () => {
     });
 
     it('should require stage in body', async () => {
-      const lead = await Lead.create({ companyName: 'No Stage', createdBy: user._id });
+      const lead = await Lead.create({ companyName: 'No Stage', createdBy: user._id, assignedTo: user._id });
 
       const res = await request(app)
         .patch(`/api/leads/${lead._id}/stage`)
@@ -168,7 +168,7 @@ describe('Lead Routes', () => {
     });
 
     it('should reject invalid stage', async () => {
-      const lead = await Lead.create({ companyName: 'Bad Stage', createdBy: user._id });
+      const lead = await Lead.create({ companyName: 'Bad Stage', createdBy: user._id, assignedTo: user._id });
 
       const res = await request(app)
         .patch(`/api/leads/${lead._id}/stage`)
@@ -180,7 +180,7 @@ describe('Lead Routes', () => {
 
   describe('DELETE /api/leads/:id', () => {
     it('should forbid BDA from deleting', async () => {
-      const lead = await Lead.create({ companyName: 'Delete Co', createdBy: user._id });
+      const lead = await Lead.create({ companyName: 'Delete Co', createdBy: user._id, assignedTo: user._id });
 
       const res = await request(app).delete(`/api/leads/${lead._id}`);
 
@@ -196,7 +196,7 @@ describe('Lead Routes', () => {
       });
       getAuth.mockReturnValue({ userId: 'clerk_admin' });
 
-      const lead = await Lead.create({ companyName: 'Admin Delete', createdBy: admin._id });
+      const lead = await Lead.create({ companyName: 'Admin Delete', createdBy: admin._id, assignedTo: admin._id });
 
       const res = await request(app).delete(`/api/leads/${lead._id}`);
 
