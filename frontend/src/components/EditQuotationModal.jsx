@@ -3,6 +3,7 @@ import { useUpdateQuotation } from '../hooks/useQuotations'
 
 export default function EditQuotationModal({ open, onClose, quotation }) {
   const [form, setForm] = useState({ items: [], tax: 0 })
+  const [error, setError] = useState('')
   const updateQuote = useUpdateQuotation()
 
   useEffect(() => {
@@ -37,6 +38,7 @@ export default function EditQuotationModal({ open, onClose, quotation }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!quotation) return
+    setError('')
     try {
       const subtotal = form.items.reduce((sum, item) => sum + item.totalPrice, 0)
       const grandTotal = subtotal + Number(form.tax)
@@ -50,7 +52,8 @@ export default function EditQuotationModal({ open, onClose, quotation }) {
         },
       })
       onClose()
-    } catch {
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to update quotation')
     }
   }
 
@@ -65,6 +68,7 @@ export default function EditQuotationModal({ open, onClose, quotation }) {
         <p className="text-xs text-gray-500 mt-1">
           Lead: {quotation.leadId?.companyName || 'N/A'} &middot; Status: {quotation.status} &middot; v{quotation.version}
         </p>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
 
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <div className="space-y-2">

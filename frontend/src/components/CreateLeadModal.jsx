@@ -10,10 +10,12 @@ export default function CreateLeadModal({ open, onClose }) {
     expectedDealValue: '',
     notes: '',
   })
+  const [error, setError] = useState('')
   const createLead = useCreateLead()
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
     try {
       await createLead.mutateAsync({
         ...form,
@@ -21,7 +23,8 @@ export default function CreateLeadModal({ open, onClose }) {
       })
       setForm({ companyName: '', contactPerson: '', email: '', phone: '', expectedDealValue: '', notes: '' })
       onClose()
-    } catch {
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to create lead')
     }
   }
 
@@ -31,6 +34,7 @@ export default function CreateLeadModal({ open, onClose }) {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <h3 className="text-lg font-bold text-gray-800">New Lead</h3>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         <form onSubmit={handleSubmit} className="mt-4 space-y-3">
           <input
             required

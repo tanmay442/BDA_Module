@@ -138,6 +138,14 @@ exports.update = async (req, res, next) => {
       runValidators: true,
     });
 
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'task_updated',
+      entityType: 'Task',
+      entityId: task._id,
+      newValue: { fields: Object.keys(update) },
+    });
+
     broadcast('tasks', 'task:updated', { id: task._id });
     res.json(task);
   } catch (error) {
@@ -147,10 +155,18 @@ exports.update = async (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   try {
-    const { error } = await loadTaskForUser(req, req.params.id);
+    const { task, error } = await loadTaskForUser(req, req.params.id);
     if (error) return res.status(error).json({ message: 'Task not found' });
 
     await Task.findByIdAndDelete(req.params.id);
+
+    await AuditLog.create({
+      userId: req.user._id,
+      action: 'task_deleted',
+      entityType: 'Task',
+      entityId: task._id,
+      oldValue: { title: task.title, status: task.status },
+    });
 
     broadcast('tasks', 'task:deleted', { id: req.params.id });
     res.json({ message: 'Task deleted' });

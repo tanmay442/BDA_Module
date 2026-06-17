@@ -9,6 +9,7 @@ export default function CreateQuotationModal({ open, onClose, leadId: preselecte
     items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }],
     tax: 0,
   })
+  const [error, setError] = useState('')
   const createQuote = useCreateQuotation()
 
   useEffect(() => {
@@ -41,6 +42,7 @@ export default function CreateQuotationModal({ open, onClose, leadId: preselecte
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setError('')
     try {
       const subtotal = form.items.reduce((sum, item) => sum + item.totalPrice, 0)
       const grandTotal = subtotal + Number(form.tax)
@@ -53,7 +55,8 @@ export default function CreateQuotationModal({ open, onClose, leadId: preselecte
       })
       setForm({ leadId: '', items: [{ productName: '', quantity: 1, unitPrice: 0, totalPrice: 0, moq: '', deliveryEstimate: '' }], tax: 0 })
       onClose()
-    } catch {
+    } catch (err) {
+      setError(err?.response?.data?.message || 'Failed to create quotation')
     }
   }
 
@@ -63,6 +66,7 @@ export default function CreateQuotationModal({ open, onClose, leadId: preselecte
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <h3 className="text-lg font-bold text-gray-800">New Quotation</h3>
+        {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
         <form onSubmit={handleSubmit} className="mt-4 space-y-4">
           <select
             className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"

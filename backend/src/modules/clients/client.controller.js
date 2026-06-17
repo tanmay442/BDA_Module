@@ -10,8 +10,9 @@ exports.list = async (req, res, next) => {
     // BDA scope: only see clients whose lead is assigned to them.
     const ownedLeads = await Lead.find(leadFilter).select('_id');
     const ids = ownedLeads.map((l) => l._id);
-    const filter = ids.length ? { leadId: { $in: ids } } : { leadId: null };
+    if (!ids.length) return res.json([]);
 
+    const filter = { leadId: { $in: ids } };
     const clients = await Client.find(filter)
       .populate('leadId', 'companyName currentStage')
       .populate('accountManager', 'name email')

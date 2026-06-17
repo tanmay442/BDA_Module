@@ -84,6 +84,7 @@ export default function Dashboard() {
   /* ── revenue trend data (monthly expected vs actual) ── */
   const revenueTrendData = useMemo(() => {
     if (!leads?.length) return []
+    const now = new Date()
     const months = {}
     for (const lead of leads) {
       const d = new Date(lead.createdAt)
@@ -97,7 +98,7 @@ export default function Dashboard() {
     const idx = ordered.indexOf(nowMonth)
     const range = ordered.slice(Math.max(0, idx - 5), idx + 1)
     return range.map((m) => months[m] || { month: m, expected: 0, actual: 0 })
-  }, [leads, now])
+  }, [leads])
 
   /* ── BDA leaderboard ── */
   const leadsByBda = useMemo(() => {
@@ -140,9 +141,9 @@ export default function Dashboard() {
     () =>
       (leads || []).filter((l) => {
         if (l.currentStage === 'won' || l.currentStage === 'lost') return false
-        return new Date(l.updatedAt) < subDays(now, 14)
+        return new Date(l.updatedAt) < subDays(new Date(), 14)
       }),
-    [leads, now],
+    [leads],
   )
 
   /* ── recent wins ── */

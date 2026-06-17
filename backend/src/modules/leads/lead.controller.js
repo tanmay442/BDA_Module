@@ -54,10 +54,11 @@ exports.list = async (req, res, next) => {
     if (stage) filter.currentStage = stage;
     if (assignedTo) filter.assignedTo = assignedTo;
     if (search) {
+      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       filter.$or = [
-        { companyName: { $regex: search, $options: 'i' } },
-        { contactPerson: { $regex: search, $options: 'i' } },
-        { email: { $regex: search, $options: 'i' } },
+        { companyName: { $regex: escaped, $options: 'i' } },
+        { contactPerson: { $regex: escaped, $options: 'i' } },
+        { email: { $regex: escaped, $options: 'i' } },
       ];
     }
 
